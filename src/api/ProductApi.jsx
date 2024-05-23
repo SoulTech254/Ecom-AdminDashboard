@@ -1,32 +1,33 @@
 import { toast } from "sonner";
+import { useMutation } from "react-query";
 
-const BASE_URL = import.meta.env.API_BASE_URL
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const useCreateProduct = () => {
   const createProductRequest = async (data) => {
-    try {
-      const response = await fetch(`${BASE_URL}/products`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      console.error(error);
+    const response = await fetch(`${BASE_URL}/products`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.message);
     }
+    return result;
   };
+
   const { mutateAsync: createProduct, isLoading: isCreatingProduct } =
-    useMutation(
-      createProductRequest
-        .then(() => {
-          toast.success("Product created successfully");
-        })
-        .catch((error) => {
-          toast.error(error.message);
-        })
-    );
+    useMutation(createProductRequest, {
+      onSuccess: () => {
+        toast.success("Product created");
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    });
+
   return { createProduct, isCreatingProduct };
 };
