@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { useMutation } from "react-query";
+import { useMutation, useQuery } from "react-query";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -30,4 +30,46 @@ export const useCreateProduct = () => {
     });
 
   return { createProduct, isCreatingProduct };
+};
+
+export const useSearchProducts = () => {
+  const searchProductsRequest = async (searchQuery) => {
+    const response = await fetch(
+      `${BASE_URL}/products?searchQuery=${searchQuery}`
+    );
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message);
+    }
+    return data;
+  };
+
+  const { mutateAsync: searchProducts, isLoading: isLoadingSearchProducts } =
+    useMutation(searchProductsRequest);
+  return { searchProducts, isLoadingSearchProducts };
+};
+
+export const useGetAllProducts = (searchState) => {
+  console.log(searchState)
+  const params = new URLSearchParams();
+  params.set("searchQuery", searchState.searchQuery);
+  params.set("page", searchState.page.toString());
+  params.set("sortOption", searchState.sortOption);
+  const getProductsRequest = async () => {
+    const response = await fetch(`${BASE_URL}/products?${params.toString()}`, {
+      method: "GET",
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message);
+    }
+    return data;
+  };
+
+  const { data: products, isLoading: isLoadingProducts } = useQuery(
+    ["getProducts", searchState],
+    getProductsRequest
+  );
+
+  return { products, isLoadingProducts };
 };
