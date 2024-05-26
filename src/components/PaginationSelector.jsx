@@ -1,55 +1,47 @@
-import React from "react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "./ui/pagination";
 
 const PaginationSelector = ({ page, pages, onPageChange }) => {
   const pageNumbers = [];
   for (let i = 1; i <= pages; i++) {
     pageNumbers.push(i);
   }
+
   return (
-    <div className="pagination">
-      <div className="pagination-content">
+    <Pagination>
+      <PaginationContent>
         {page !== 1 && (
-          <div className="pagination-item">
-            <a
+          <PaginationItem>
+            <PaginationPrevious
               href="#"
-              className="pagination-link"
-              onClick={(e) => {
-                e.preventDefault();
-                onPageChange(page - 1);
-              }}
-            >
-              Previous
-            </a>
-          </div>
+              onClick={() => onPageChange(page - 1)}
+            />
+          </PaginationItem>
         )}
         {pageNumbers.map((number) => (
-          <div className="pagination-item" key={number}>
-            <a
+          <PaginationItem key={number}>
+            <PaginationLink
               href="#"
-              className={`pagination-link ${page === number ? "active" : ""}`}
-              onClick={(e) => {
-                onPageChange(number);
-              }}
+              onClick={() => onPageChange(number)}
+              isActive={page === number}
             >
               {number}
-            </a>
-          </div>
+            </PaginationLink>
+          </PaginationItem>
         ))}
-        {page !== pages && (
-          <div className="pagination-item">
-            <a
-              href="#"
-              className="pagination-link"
-              onClick={(e) => {
-                onPageChange(page + 1);
-              }}
-            >
-              Next
-            </a>
-          </div>
+        {page !== pageNumbers.length && (
+          <PaginationItem>
+            <PaginationNext href="#" onClick={() => onPageChange(page + 1)} />
+          </PaginationItem>
         )}
-      </div>
-    </div>
+      </PaginationContent>
+    </Pagination>
   );
 };
 

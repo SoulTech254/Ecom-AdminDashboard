@@ -5,7 +5,11 @@ export const productTableConfig = {
       label: "Image",
       render: (value) => {
         return value[0]
-          ? React.createElement("img", { src: value[0], alt: "Product Image" })
+          ? React.createElement("img", {
+              src: value[0],
+              alt: "Product Image",
+              style: { width: "50px", height: "50px", borderRadius: "20px" },
+            })
           : null;
       },
     },

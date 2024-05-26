@@ -4,6 +4,7 @@ import {
 } from "@radix-ui/react-dropdown-menu";
 import { Button } from "./ui/button";
 import { DropdownMenuContent, DropdownMenuItem } from "./ui/dropdown-menu";
+import { Filter } from "lucide-react";
 
 const SORT_OPTIONS = [
   {
@@ -24,9 +25,13 @@ const SortOptionDropdown = ({ onChange, sortOption }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="cursor-pointer">
-        <Button variant="outline" className="w-full">
-          Sort by: {sortOption}
-        </Button>
+        <div
+          variant="outline"
+          className="w-fit flex items-center border rounded-sm px-3 py-1 gap-2 cursor-pointer"
+        >
+          <Filter size={20} />{" "}
+          <span className="text-lg font-normal">Filter</span>
+        </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         {SORT_OPTIONS.map((option) => (

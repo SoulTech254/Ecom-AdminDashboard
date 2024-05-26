@@ -10,6 +10,8 @@ import {
   uploadBytesResumable,
 } from "firebase/storage";
 import { app } from "../config/firebase";
+import { Loader } from "lucide-react";
+import { useEffect } from "react";
 
 const formSchema = z.object({
   productName: z.string().min(1, "name cannot be empty."),
@@ -25,25 +27,39 @@ const formSchema = z.object({
     level_3_name: z.string().min(1, "level 3 Category cannot be empty."),
   }),
 });
-const AddProductForm = () => {
-  const { createProduct } = useCreateProduct();
+
+//TODO: 1. extract API hook to individual pages
+//2.Change button type to upload or delete based on the action
+
+const AddProductForm = ({
+  onSubmit,
+  action,
+  isLoading,
+  defaultValues,
+  img,
+}) => {
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(formSchema),
+    defaultValues: defaultValues,
   });
 
   const onSave = (data) => {
     const formData = { ...data, images };
     console.log(formData);
-    createProduct(formData);
+    onSubmit(formData);
   };
 
   const [files, setFiles] = useState([]);
   const [images, setImages] = useState([]);
   console.log(images);
+
+  useEffect(() => {
+    setImages(img);
+  }, [img]);
 
   const handleImageSubmit = (e) => {
     console.log(files);
@@ -159,7 +175,7 @@ const AddProductForm = () => {
       {errors.category && errors.category.level_3_name && (
         <span>{errors.category.level_3_name.message}</span>
       )}
-      <button type="submit">Submit</button>
+      <button type="submit">{isLoading ? <Loader /> : action}</button>
     </form>
   );
 };

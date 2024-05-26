@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import { useMutation, useQuery } from "react-query";
+import { useParams } from "react-router-dom";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -50,7 +51,7 @@ export const useSearchProducts = () => {
 };
 
 export const useGetAllProducts = (searchState) => {
-  console.log(searchState)
+  console.log(searchState);
   const params = new URLSearchParams();
   params.set("searchQuery", searchState.searchQuery);
   params.set("page", searchState.page.toString());
@@ -72,4 +73,53 @@ export const useGetAllProducts = (searchState) => {
   );
 
   return { products, isLoadingProducts };
+};
+
+export const useUpdateProduct = () => {
+  const updateProductRequest = async (id, data) => {
+    const response = await fetch(`${BASE_URL}/products/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.message);
+    }
+    return result;
+  };
+
+  const { mutateAsync: updateProduct, isLoading: isUpdatingProduct } =
+    useMutation(updateProductRequest, {
+      onSuccess: () => {
+        toast.success("Product updated");
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    });
+  return { updateProduct, isUpdatingProduct };
+};
+
+export const useGetProduct = () => {
+  const getProductsRequest = async (id) => {
+    // This is line 115
+    const response = await fetch(`${BASE_URL}/products/${id}`);
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message);
+    }
+    return data;
+  };
+
+  const { id } = useParams();
+
+  const { data: product, isLoading: isGettingProduct } = useQuery(
+    ["getProduct", id],
+    () => getProductsRequest(id)
+  );
+
+  return { product, isGettingProduct };
 };
