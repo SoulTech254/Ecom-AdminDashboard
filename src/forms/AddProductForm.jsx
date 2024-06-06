@@ -12,6 +12,7 @@ import {
 import { app } from "../config/firebase";
 import { Loader } from "lucide-react";
 import { useEffect } from "react";
+import { CirclePlus ,Upload } from 'lucide-react';
 
 const formSchema = z.object({
   productName: z.string().min(1, "name cannot be empty."),
@@ -99,85 +100,160 @@ const AddProductForm = ({
     });
   };
   return (
-    <form onSubmit={handleSubmit(onSave)}>
+    <form onSubmit={handleSubmit(onSave)} className="min-h-screen bg-background flex flex-wrap gap-4 justify-center pt-4">
+    {/* First Column */}
+    <div className="flex flex-col items-center bg-white m-1 pb-2 rounded-lg w-[350px] h-fit gap-2 border-2 border-slate-200">
+      <h1 className="font-semibold text-2xl w-full mb-2 p-3 self-start border-b-2 border-slate-200">Product Image</h1>
+       <button 
+          type="button" 
+          className="flex flex-row justify-center p-2 m-2 border border-slate-300 rounded-lg"
+          onClick={() => document.getElementById('images').click()}
+        >
+          <CirclePlus />
+          <span className="ml-2 capitalize">add image</span>
+        </button>
       <input
         onChange={(e) => setFiles(e.target.files)}
-        className="p-3 border border-gray-300 rounded w-full"
+        className="p-3 w-full hidden"
         type="file"
         id="images"
         accept="image/*"
         multiple
       />
       {errors.images && <span>{errors.images.message}</span>}
-      <button type="button" onClick={handleImageSubmit}>
-        Upload
+      <div className="flex flex-wrap justify-center">
+        {images && images.map((image) => (
+          <img src={image} className="rounded-lg w-[120px] h-[120px] object-cover m-2" alt="Product" />
+        ))}
+      </div>
+      <button type="button" onClick={handleImageSubmit} className="flex flex-row justify-center bg-primary text-white p-2 rounded-lg m-4 focus:scale-95 hover:opacity-95">
+        <Upload className="h-6 w-5" /> <span className="ml-2 capitalize">Upload</span>
       </button>
-      {images && images.map((image) => <img src={image} />)}
-      <input
-        type="text"
-        {...register("productName")}
-        placeholder="Product name"
-      />
-      {errors.name && <span>{errors.name.message}</span>}
+    </div>
 
-      <input type="number" {...register("price")} placeholder="Price" />
-      {errors.price && <span>{errors.price.message}</span>}
+    {/* Second Column */}
+    <div className="flex flex-col items-left bg-white m-1  rounded-lg w-[500px] h-fit border-2 border-slate-200">
+      <h1 className="font-semibold text-2xl mb-2 p-3 w-full self-start border-b-2 border-slate-200">Product Details</h1>
+      <div className="px-4 py-1 ">
+        <label htmlFor="productName" className="block capitalize">Product name</label>
+        <input
+          id="productName"
+          type="text"
+          {...register("productName")}
+          placeholder="Enter product name"
+          className="w-1/2 border outline-none focus:outline-none p-2 rounded-md "
+        />
+        {errors.name && <span className="text-red-500 font-bold text-sm">{errors.name.message}</span>}
+      </div>
+      
+      <div className="flex flex-row items-center justify-between bg-white rounded-lg gap-3 px-4 py-1">
+        <div className="w-1/2">
+          <label htmlFor="price" className="block capitalize">Price</label>
+          <input id="price" type="number" {...register("price")} placeholder="Price" className="w-full border outline-none focus:outline-none p-2 rounded-md  no-arrows"/>
+          {errors.price && <span className="text-red-500 font-bold text-sm">{errors.price.message}</span>}
+        </div>
+        <div className="w-1/2">
+          <label htmlFor="discount" className="block capitalize">Discount</label>
+          <input id="discount" type="number" {...register("price")} placeholder="Price" className="w-full border outline-none focus:outline-none p-2 rounded-md  no-arrows"/>
+        </div>
+      </div>
+      
+      <div className="flex flex-row w items-center justify-between gap-3 bg-white px-4 py-1">
+        <div className="w-1/2">
+          <label htmlFor="SKU" className="block capitalize">SKU (Stock Keeping Unit)</label> 
+          <input id="SKU" type="text" {...register("SKU")} placeholder="SKU" className="w-full border outline-none focus:outline-none p-2 rounded-md  "/>
+          {errors.SKU && <span className="text-red-500 font-bold text-sm">{errors.SKU.message}</span>}
+        </div>
+        <div className="w-1/2">
+          <label htmlFor="brand" className="block">Brand</label>
+          <input id="brand" type="text" {...register("brand")} placeholder="Brand" className="w-full border outline-none focus:outline-none p-2 rounded-md " />
+          {errors.brand && <span className="text-red-500 font-bold text-sm">{errors.brand.message}</span>}
+        </div>
+      </div>
+      
+      <div className="items-left bg-white flex flex-col px-4 py-1">
+        <label htmlFor="description" className="block capitalize">Description</label>
+        <input
+          id="description"
+          type="text"
+          {...register("description")}
+          placeholder="Description"
+          className="w-full border outline-none focus:outline-none p-2 rounded-md  "
+        />
+        {errors.description && <span className="text-red-500 font-bold text-sm">{errors.description.message}</span>}
+      </div>
+      
+      <div className="flex flex-row items-center justify-between gap-3 px-4 py-1">
+        <div className="w-1/2">
+          <label htmlFor="size" className="block capitalize">Size</label>
+          <input
+            id="size"
+            type="number"
+            {...register("size", { valueAsNumber: true })}
+            placeholder="Size"
+            className="w-full border outline-none focus:outline-none p-2 rounded-md  no-arrows"
+          />
+          {errors.size && <span className="text-red-500 font-bold text-sm">{errors.size.message}</span>}
+        </div>
+        <div className="w-1/2">
+          <label htmlFor="measurementUnit" className="block">Measurement Unit</label>
+          <input
+            type="text"
+            {...register("measurementUnit")}
+            placeholder="Measurement Unit"
+            className="w-full border outline-none focus:outline-none p-2 rounded-md  no-arrows"
+          />
+          {errors.measurementUnit && <span className="text-red-500 font-bold text-sm">{errors.measurementUnit.message}</span>}
+        </div>
+      </div>
+      
+      <div className="px-4 py-1">
+      <div className="text-left capitalize block text-[16px] ">Category</div>
+      <div className="flex flex-row gap-3 items-left bg-white  justify-between ">
+        <div className="w-1/3">
+          <input
+            type="text"
+            {...register("category.level_1_name")}
+            placeholder="Level 1"
+            className="w-full rounded-md border p-2"
+          />
+          {errors.category && errors.category.level_1_name && (
+            <span className="text-red-500 font-bold text-sm">{errors.category.level_1_name.message}</span>
+          )}
+        </div>
+        <div className="w-1/3">
+          <input
+            type="text"
+            {...register("category.level_2_name")}
+            placeholder="Level 2"
+            className="w-full rounded-md border p-2"
+          />
+          {errors.category && errors.category.level_2_name && (
+            <span className="text-red-500 font-bold text-sm">{errors.category.level_2_name.message}</span>
+          )}
+        </div>
+        <div>
+          <input
+            type="text"
+            {...register("category.level_3_name")}
+            placeholder="Level 3"
+            className="w-full rounded-md border p-2"
+          />
+          {errors.category && errors.category.level_3_name && (
+            <span className="text-red-500 font-bold text-sm">{errors.category.level_3_name.message}</span>
+          )}
+        </div>
+      </div>
 
-      <input type="text" {...register("SKU")} placeholder="SKU" />
-      {errors.SKU && <span>{errors.SKU.message}</span>}
-      <input type="text" {...register("brand")} placeholder="Brand" />
-      {errors.brand && <span>{errors.brand.message}</span>}
-
-      <input
-        type="text"
-        {...register("description")}
-        placeholder="Description"
-      />
-      {errors.description && <span>{errors.description.message}</span>}
-
-      <input
-        type="text"
-        {...register("measurementUnit")}
-        placeholder="Measurement Unit"
-      />
-      {errors.measurementUnit && <span>{errors.measurementUnit.message}</span>}
-
-      <input
-        type="number"
-        {...register("size", { valueAsNumber: true })}
-        placeholder="Size"
-      />
-      {errors.size && <span>{errors.size.message}</span>}
-
-      <input
-        type="text"
-        {...register("category.level_1_name")}
-        placeholder="Category Level 1"
-      />
-      {errors.category && errors.category.level_1_name && (
-        <span>{errors.category.level_1_name.message}</span>
-      )}
-
-      <input
-        type="text"
-        {...register("category.level_2_name")}
-        placeholder="Category Level 2"
-      />
-      {errors.category && errors.category.leve_2_name && (
-        <span>{errors.category.leve_2_name.message}</span>
-      )}
-
-      <input
-        type="text"
-        {...register("category.level_3_name")}
-        placeholder="Category Level 3"
-      />
-      {errors.category && errors.category.level_3_name && (
-        <span>{errors.category.level_3_name.message}</span>
-      )}
-      <button type="submit">{isLoading ? <Loader /> : action}</button>
-    </form>
-  );
+      </div>
+      
+      <button type="submit" className="bg-primary text-white p-3 rounded-lg m-4  block focus:scale-95 hover:opacity-95">
+        {isLoading ? <Loader /> : action }
+      </button>
+    </div>
+  </form>
+);
 };
+
 
 export default AddProductForm;
