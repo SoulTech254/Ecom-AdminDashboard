@@ -33,3 +33,18 @@ export const productTableConfig = {
   },
   order: ["images", "SKU", "productName", "price", "createdAt", "updatedAt"],
 };
+
+
+export const userTableConfig = {
+  columns: {
+    fName: { label: "First Name" },
+    lName: { label: "Last Name" },
+    gender: { label: "Gender" },
+    phoneNumber: { label: "Phone Number" },
+    email: { label: "Email" },
+    DOB: { label: "Date of Birth" },
+    // Add more columns as needed
+  },
+  order: ["fName", "lName", "gender", "phoneNumber", "email", "DOB"], // Order of columns to display
+  // You can add additional configuration options as needed
+};

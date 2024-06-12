@@ -33,7 +33,8 @@ const UpdateProductPage = () => {
       }
     : {};
   const handleUpdateSubmit = async (data) => {
-    updateProduct(id, data);
+    console.log(data);
+    updateProduct({id, data});
   };
   return (
     <div>

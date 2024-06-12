@@ -76,7 +76,8 @@ export const useGetAllProducts = (searchState) => {
 };
 
 export const useUpdateProduct = () => {
-  const updateProductRequest = async (id, data) => {
+  const updateProductRequest = async ({ id, data }) => {
+    console.log(data);
     const response = await fetch(`${BASE_URL}/products/${id}`, {
       method: "PUT",
       headers: {

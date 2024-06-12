@@ -1,11 +1,11 @@
-import AddProductForm from "../forms/AddProductForm"
+import AddProductForm from "../forms/AddProductForm";
 
 const Homepage = () => {
   return (
     <div>
-      <AddProductForm />
+      <AddProductForm action="Create" />
     </div>
-  )
-}
+  );
+};
 
-export default Homepage
+export default Homepage;

@@ -1,4 +1,4 @@
-import { useGetAllProducts } from "@/api/ProductApi";
+import { useGetAllUsers } from "@/api/UserApi"; // Assuming useGetAllUsers is defined in UserApi
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -12,12 +12,12 @@ import DataTable from "@/components/DataTable";
 import PaginationSelector from "@/components/PaginationSelector";
 import SearchBar from "@/components/SearchBar";
 import SortOptionDropdown from "@/components/SortOptionDropdown";
-import { productTableConfig } from "@/config/tablesConfig";
+import { userTableConfig } from "@/config/tablesConfig"; // Assuming userTableConfig is defined for users
 import { CirclePlus, File, UserRound } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-const ProductsPage = () => {
+const UsersPage = () => {
   const [results, setResults] = useState({
     metadata: {
       page: 1,
@@ -32,18 +32,15 @@ const ProductsPage = () => {
     sortOption: "bestMatch",
   });
 
-  const { products, isLoading: isLoadingProducts } =
-    useGetAllProducts(searchState);
+  const { users, isLoading: isLoadingUsers } = useGetAllUsers(searchState); // Fetch all users
 
   useEffect(() => {
-    if (!isLoadingProducts && products) {
-      setResults(products);
+    if (!isLoadingUsers && users) {
+      setResults(users);
     }
-  }, [isLoadingProducts, products]);
+  }, [isLoadingUsers, users]);
 
-  //Alter Search Query
   const setSearchQuery = (searchFormData) => {
-    console.log(searchFormData);
     setSearchState((prev) => ({
       ...prev,
       searchQuery: searchFormData.searchQuery,
@@ -79,7 +76,7 @@ const ProductsPage = () => {
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbPage>
-                <p className="text-lg">Products</p>
+                <p className="text-lg">Users</p>
               </BreadcrumbPage>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
@@ -88,7 +85,7 @@ const ProductsPage = () => {
 
         <div className="flex items-center gap-2">
           <SearchBar
-            placeholder={"Search Products"}
+            placeholder={"Search Users"}
             searchQuery={searchState.searchQuery}
             onSubmit={setSearchQuery}
           />
@@ -109,22 +106,22 @@ const ProductsPage = () => {
           />
         </div>
         +{" "}
-        <Link to="/products/new-product">
+        <Link to="/users/new-user">
           <div className="cursor-pointer flex rounded-sm w-fit border px-4 py-2 items-center gap-2">
-            <CirclePlus /> <span>Add a new Product</span>+ -{" "}
+            <CirclePlus /> <span>Add a new User</span>+ -{" "}
           </div>
         </Link>
       </div>
 
-      {isLoadingProducts ? (
+      {isLoadingUsers ? (
         <p>Loading...</p>
       ) : (
         <>
           {results.results.length > 0 && (
             <DataTable
-              config={productTableConfig}
+              config={userTableConfig}
               data={results.results}
-              page="products"
+              page="users"
             />
           )}
           <PaginationSelector
@@ -138,4 +135,4 @@ const ProductsPage = () => {
   );
 };
 
-export default ProductsPage;
+export default UsersPage;

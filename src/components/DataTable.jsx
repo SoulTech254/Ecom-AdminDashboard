@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom"; // Import Link from React Router DOM
 
-const DataTable = ({ data, config }) => {
+const DataTable = ({ data, config, page }) => {
   // Check if data is available
   if (!data || data.length === 0) {
     return <div>No data available</div>;
@@ -42,7 +42,7 @@ const DataTable = ({ data, config }) => {
               {/* Make the entire row clickable with link to product detail page */}
               <td className="px-6 py-4 whitespace-nowrap">
                 <Link
-                  to={`/products/${product._id}`}
+                  to={`/${page}/${product._id}`}
                   className="text-blue-500 hover:underline"
                 >
                   View Details
