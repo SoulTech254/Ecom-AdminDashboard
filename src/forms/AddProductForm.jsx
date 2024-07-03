@@ -1,8 +1,7 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCreateProduct } from "../api/ProductApi";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   getDownloadURL,
   getStorage,
@@ -10,14 +9,14 @@ import {
   uploadBytesResumable,
 } from "firebase/storage";
 import { app } from "../config/firebase";
-import { Plus } from "lucide-react";
-import { useEffect } from "react";
 import { Upload } from "lucide-react";
 import Loader from "@/components/Loader";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   productName: z.string().min(1, "name cannot be empty."),
   price: z.coerce.number(),
+  discountPrice: z.coerce.number(),
   SKU: z.string().min(1, "SKU cannot be empty."),
   description: z.string(),
   measurementUnit: z.string().min(1, "Measurement Unit cannot be empty."),
@@ -29,9 +28,6 @@ const formSchema = z.object({
     level_3_name: z.string().min(1, "level 3 Category cannot be empty."),
   }),
 });
-
-//TODO: 1. extract API hook to individual pages
-//2.Change button type to upload or delete based on the action
 
 const AddProductForm = ({
   onSubmit,
@@ -57,31 +53,40 @@ const AddProductForm = ({
 
   const [files, setFiles] = useState([]);
   const [images, setImages] = useState([]);
+
+  console.log(files);
   console.log(images);
 
   useEffect(() => {
     setImages(img);
   }, [img]);
 
-  const handleImageSubmit = (e) => {
-    console.log(files);
-    if (files.length > 0 && files.length + images.length < 6) {
-      const promises = [];
-
-      for (let i = 0; i < files.length; i++) {
-        promises.push(storeImage(files[i]));
-      }
-      Promise.all(promises).then((urls) => {
-        setImages(urls);
-      });
+  const handleFileChange = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    setFiles(selectedFiles);
+    if (selectedFiles.length > 0) {
+      handleImageSubmit(selectedFiles);
     }
   };
+
+  const handleImageSubmit = async (selectedFiles) => {
+    if (selectedFiles.length + images.length <= 5) {
+      const promises = selectedFiles.map((file) => storeImage(file));
+      const urls = await Promise.all(promises);
+      setImages((prevImages) => [...prevImages, ...urls]);
+      setFiles([]);
+    } else {
+      toast("You can only upload a maximum of 5 images.");
+    }
+  };
+
   const storeImage = async (file) => {
     return new Promise((resolve, reject) => {
       const storage = getStorage(app);
       const fileName = new Date().getTime() + file.name;
       const storageRef = ref(storage, fileName);
       const uploadTask = uploadBytesResumable(storageRef, file);
+
       uploadTask.on(
         "state_changed",
         (snapshot) => {
@@ -100,6 +105,7 @@ const AddProductForm = ({
       );
     });
   };
+
   return (
     <form
       onSubmit={handleSubmit(onSave)}
@@ -110,16 +116,8 @@ const AddProductForm = ({
         <h1 className="font-semibold text-2xl w-full mb-2 p-3 self-start border-b-2 border-slate-200">
           Product Image
         </h1>
-        <button
-          type="button"
-          className="flex flex-row justify-center p-2 m-2 border border-slate-300 rounded-lg"
-          onClick={() => document.getElementById("images").click()}
-        >
-          <Plus />
-          <span className="ml-2 capitalize">add image</span>
-        </button>
         <input
-          onChange={(e) => setFiles(e.target.files)}
+          onChange={handleFileChange}
           className="p-3 w-full hidden"
           type="file"
           id="images"
@@ -129,8 +127,9 @@ const AddProductForm = ({
         {errors.images && <span>{errors.images.message}</span>}
         <div className="flex flex-wrap justify-center">
           {images &&
-            images.map((image) => (
+            images.map((image, index) => (
               <img
+                key={index}
                 src={image}
                 className="rounded-lg w-[120px] h-[120px] object-cover m-2"
                 alt="Product"
@@ -139,11 +138,11 @@ const AddProductForm = ({
         </div>
         <button
           type="button"
-          onClick={handleImageSubmit}
+          onClick={() => document.getElementById("images").click()}
           className="flex flex-row justify-center bg-primary text-white p-2 rounded-lg m-4 focus:scale-95 hover:opacity-95"
         >
           <Upload className="h-6 w-5" />{" "}
-          <span className="ml-2 capitalize">Upload</span>
+          <span className="ml-2 capitalize">Add & Upload</span>
         </button>
       </div>
 
@@ -163,9 +162,9 @@ const AddProductForm = ({
             placeholder="Enter product name"
             className="w-1/2 border outline-none focus:outline-none p-2 rounded-md "
           />
-          {errors.name && (
+          {errors.productName && (
             <span className="text-red-500 font-bold text-sm">
-              {errors.name.message}
+              {errors.productName.message}
             </span>
           )}
         </div>
@@ -195,8 +194,8 @@ const AddProductForm = ({
             <input
               id="discount"
               type="number"
-              {...register("price")}
-              placeholder="Price"
+              {...register("discountPrice")}
+              placeholder="Discount Price"
               className="w-full border outline-none focus:outline-none p-2 rounded-md  no-arrows"
             />
           </div>
@@ -266,7 +265,7 @@ const AddProductForm = ({
             <input
               id="size"
               type="number"
-              {...register("size", { valueAsNumber: true })}
+              {...register("size")}
               placeholder="Size"
               className="w-full border outline-none focus:outline-none p-2 rounded-md  no-arrows"
             />
@@ -281,6 +280,7 @@ const AddProductForm = ({
               Measurement Unit
             </label>
             <input
+              id="measurementUnit"
               type="text"
               {...register("measurementUnit")}
               placeholder="Measurement Unit"
