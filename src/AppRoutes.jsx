@@ -5,6 +5,8 @@ import AddProductPage from "./pages/AddProductPage";
 import UpdateProductPage from "./pages/UpdateProductPage";
 import UsersPage from "./pages/UsersPage";
 import UserInfoPage from "./pages/UserInfoPage";
+import OrdersPage from "./pages/OrdersPage";
+import OrderInfoPage from "./pages/OrderInfoPage";
 
 function AppRoutes() {
   return (
@@ -15,6 +17,8 @@ function AppRoutes() {
       <Route path="/products/new-product" element={<AddProductPage />} />
       <Route path="/users" element={<UsersPage />} />
       <Route path="/users/:id" element={<UserInfoPage />} />
+      <Route path="/orders" element={<OrdersPage />} />
+      <Route path="/orders/:orderId" element={<OrderInfoPage />} />
     </Routes>
   );
 }
