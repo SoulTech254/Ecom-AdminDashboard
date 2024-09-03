@@ -12,21 +12,19 @@ import { app } from "../config/firebase";
 import { Upload } from "lucide-react";
 import Loader from "@/components/Loader";
 import { toast } from "sonner";
+import { useGetCategories } from "@/api/CategoryApi";
 
 const formSchema = z.object({
-  productName: z.string().min(1, "name cannot be empty."),
+  productName: z.string().min(1, "Name cannot be empty."),
   price: z.coerce.number(),
   discountPrice: z.coerce.number(),
   SKU: z.string().min(1, "SKU cannot be empty."),
   description: z.string(),
   measurementUnit: z.string().min(1, "Measurement Unit cannot be empty."),
   size: z.coerce.number(),
+  stockLevel: z.coerce.number(),
   brand: z.string().min(1, "Brand cannot be empty."),
-  category: z.object({
-    level_1_name: z.string().min(1, "Level 1 Category cannot be empty."),
-    level_2_name: z.string().min(1, "Level 2 Category cannot be empty."),
-    level_3_name: z.string().min(1, "level 3 Category cannot be empty."),
-  }),
+  category: z.string().min(1, "Category cannot be empty."),
 });
 
 const AddProductForm = ({
@@ -40,25 +38,37 @@ const AddProductForm = ({
     register,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm({
     resolver: zodResolver(formSchema),
-    defaultValues: defaultValues,
+    defaultValues: defaultValues || {},
   });
 
+  const {
+    categories,
+    isLoading: categoriesLoading,
+    error: categoriesError,
+  } = useGetCategories();
+
+  // Update form values whenever defaultValues change
+  useEffect(() => {
+    reset(defaultValues);
+  }, [defaultValues, reset]);
+
   const onSave = (data) => {
+    console.log(data);
     const formData = { ...data, images };
-    console.log(formData);
+    console.log("FormData:", formData); // Debugging
     onSubmit(formData);
   };
 
   const [files, setFiles] = useState([]);
   const [images, setImages] = useState([]);
-
-  console.log(files);
-  console.log(images);
+  const [uploadProgress, setUploadProgress] = useState({});
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    setImages(img);
+    setImages(img || []);
   }, [img]);
 
   const handleFileChange = (e) => {
@@ -71,10 +81,11 @@ const AddProductForm = ({
 
   const handleImageSubmit = async (selectedFiles) => {
     if (selectedFiles.length + images.length <= 5) {
+      setUploading(true);
       const promises = selectedFiles.map((file) => storeImage(file));
-      const urls = await Promise.all(promises);
-      setImages((prevImages) => [...prevImages, ...urls]);
+      await Promise.all(promises);
       setFiles([]);
+      setUploading(false);
     } else {
       toast("You can only upload a maximum of 5 images.");
     }
@@ -92,13 +103,17 @@ const AddProductForm = ({
         (snapshot) => {
           const progress =
             (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          console.log(`Upload is ${progress}% done`);
+          setUploadProgress((prev) => ({
+            ...prev,
+            [file.name]: progress,
+          }));
         },
         (error) => {
           reject(error);
         },
         () => {
           getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            setImages((prevImages) => [...prevImages, downloadURL]);
             resolve(downloadURL);
           });
         }
@@ -106,247 +121,320 @@ const AddProductForm = ({
     });
   };
 
+  if (categoriesLoading) return <div>Loading categories...</div>;
+  if (categoriesError) return <div>Error loading categories</div>;
+
+  const getButtonText = () => {
+    if (uploading) {
+      const filesCount = Object.keys(uploadProgress).length;
+      const totalProgress = Object.values(uploadProgress).reduce(
+        (acc, progress) => acc + progress,
+        0
+      );
+      return `Uploading ${Math.round(totalProgress / filesCount)}%`;
+    }
+    return `Add Images`;
+  };
+
   return (
     <form
       onSubmit={handleSubmit(onSave)}
-      className="min-h-screen bg-background flex flex-wrap gap-4 justify-center pt-4"
+      className="min-h-fit bg-background flex gap-4 justify-center p-4 rounded-lg h-fit border border-slate-300 m-2"
     >
-      {/* First Column */}
-      <div className="flex flex-col items-center bg-white m-1 pb-2 rounded-lg w-[350px] h-fit gap-2 border-2 border-slate-200">
-        <h1 className="font-semibold text-2xl w-full mb-2 p-3 self-start border-b-2 border-slate-200">
-          Product Image
-        </h1>
-        <input
-          onChange={handleFileChange}
-          className="p-3 w-full hidden"
-          type="file"
-          id="images"
-          accept="image/*"
-          multiple
-        />
-        {errors.images && <span>{errors.images.message}</span>}
-        <div className="flex flex-wrap justify-center">
-          {images &&
-            images.map((image, index) => (
-              <img
-                key={index}
-                src={image}
-                className="rounded-lg w-[120px] h-[120px] object-cover m-2"
-                alt="Product"
-              />
-            ))}
+      {/* Form Fields */}
+      <div className="flex flex-col items-left w-full bg-white">
+        {/* General Information Section */}
+        <div className="bg-white m-1 p-3 rounded-lg w-full h-fit border-[0.5px] shadow-sm border-slate-200">
+          <h1 className="font-semibold text-md w-full border-slate-100">
+            General Information
+          </h1>
+          <div className="mt-2">
+            <label
+              htmlFor="productName"
+              className="block text-sm text-gray-500"
+            >
+              Product Name
+            </label>
+            <input
+              id="productName"
+              type="text"
+              {...register("productName")}
+              placeholder="Enter Product Name"
+              className="w-full border text-sm outline-none focus:outline-none py-1 px-2 rounded-md bg-slate-100"
+            />
+            {errors.productName && (
+              <span className="text-red-500 font-bold text-sm">
+                {errors.productName.message}
+              </span>
+            )}
+          </div>
+          <div className="mt-2">
+            <label
+              htmlFor="description"
+              className="block capitalize text-sm text-gray-500"
+            >
+              Description
+            </label>
+            <textarea
+              id="description"
+              rows={3}
+              {...register("description")}
+              placeholder="Description"
+              className="w-full text-sm bg-gray-100 border outline-none focus:outline-none p-2 rounded-md"
+            ></textarea>
+            {errors.description && (
+              <span className="text-red-500 font-bold text-sm">
+                {errors.description.message}
+              </span>
+            )}
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={() => document.getElementById("images").click()}
-          className="flex flex-row justify-center bg-primary text-white p-2 rounded-lg m-4 focus:scale-95 hover:opacity-95"
-        >
-          <Upload className="h-6 w-5" />{" "}
-          <span className="ml-2 capitalize">Add & Upload</span>
-        </button>
+
+        {/* Pricing and Discounts Section */}
+        <div className="bg-white m-1 p-3 rounded-lg w-full h-fit border-[0.5px] shadow-sm border-slate-200 mt-4">
+          <h1 className="font-semibold text-md w-full border-slate-100">
+            Pricing and Discounts
+          </h1>
+          <div className="flex flex-row items-center justify-between gap-2 mt-1">
+            <div className="w-1/2">
+              <label
+                htmlFor="price"
+                className="block capitalize text-sm text-gray-500"
+              >
+                Price
+              </label>
+              <input
+                id="price"
+                type="number"
+                {...register("price")}
+                placeholder="Price"
+                className="w-full border text-sm outline-none focus:outline-none py-1 px-2 rounded-md bg-slate-100"
+              />
+              {errors.price && (
+                <span className="text-red-500 font-bold text-sm">
+                  {errors.price.message}
+                </span>
+              )}
+            </div>
+            <div className="w-1/2">
+              <label
+                htmlFor="discount"
+                className="block capitalize text-sm text-gray-500"
+              >
+                Discount Price
+              </label>
+              <input
+                id="discount"
+                type="number"
+                {...register("discountPrice")}
+                placeholder="Discount Price"
+                className="w-full border text-sm outline-none focus:outline-none py-1 px-2 rounded-md bg-slate-100"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Product Details Section */}
+        <div className="bg-white m-1 p-3 rounded-lg w-full h-fit border-[0.5px] shadow-md border-slate-200 mt-4">
+          <h1 className="font-semibold text-md w-full border-slate-100">
+            Product Details
+          </h1>
+          <div className="flex flex-row items-center justify-between gap-2 mt-2">
+            <div className="w-full">
+              <label htmlFor="brand" className="block text-sm text-slate-500">
+                Brand
+              </label>
+              <input
+                id="brand"
+                type="text"
+                {...register("brand")}
+                placeholder="Brand"
+                className="w-full border text-sm outline-none focus:outline-none py-1 px-2 rounded-md bg-slate-100"
+              />
+              {errors.brand && (
+                <span className="text-red-500 font-bold text-sm">
+                  {errors.brand.message}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-row items-center justify-between gap-3 mt-2">
+            <div className="w-1/2">
+              <label
+                htmlFor="size"
+                className="block capitalize text-sm text-slate-500"
+              >
+                Size
+              </label>
+              <input
+                id="size"
+                type="number"
+                {...register("size")}
+                placeholder="Size"
+                className="w-full border text-sm outline-none focus:outline-none py-1 px-2 rounded-md bg-slate-100"
+              />
+              {errors.size && (
+                <span className="text-red-500 font-bold text-sm">
+                  {errors.size.message}
+                </span>
+              )}
+            </div>
+            <div className="w-1/2">
+              <label
+                htmlFor="measurementUnit"
+                className="block text-sm text-slate-500"
+              >
+                Measurement Unit
+              </label>
+              <input
+                id="measurementUnit"
+                type="text"
+                {...register("measurementUnit")}
+                placeholder="Measurement Unit"
+                className="w-full border text-sm outline-none focus:outline-none py-1 px-2 rounded-md bg-slate-100"
+              />
+              {errors.measurementUnit && (
+                <span className="text-red-500 font-bold text-sm">
+                  {errors.measurementUnit.message}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Second Column */}
-      <div className="flex flex-col items-left bg-white m-1  rounded-lg w-[500px] h-fit border-2 border-slate-200">
-        <h1 className="font-semibold text-2xl mb-2 p-3 w-full self-start border-b-2 border-slate-200">
-          Product Details
-        </h1>
-        <div className="px-4 py-1 ">
-          <label htmlFor="productName" className="block capitalize">
-            Product name
-          </label>
+      {/* Image Upload Section */}
+      <div className="w-full h-fit">
+        <div className="flex flex-col items-center bg-white m-1 rounded-lg gap-2 border shadow-sm p-2 border-slate-200">
+          <h1 className="font-semibold text-md w-full self-start border-slate-200">
+            Product Media
+          </h1>
           <input
-            id="productName"
-            type="text"
-            {...register("productName")}
-            placeholder="Enter product name"
-            className="w-1/2 border outline-none focus:outline-none p-2 rounded-md "
+            onChange={handleFileChange}
+            className="w-full hidden"
+            type="file"
+            id="images"
+            accept="image/*"
+            multiple
           />
-          {errors.productName && (
-            <span className="text-red-500 font-bold text-sm">
-              {errors.productName.message}
-            </span>
-          )}
-        </div>
-
-        <div className="flex flex-row items-center justify-between bg-white rounded-lg gap-3 px-4 py-1">
-          <div className="w-1/2">
-            <label htmlFor="price" className="block capitalize">
-              Price
-            </label>
-            <input
-              id="price"
-              type="number"
-              {...register("price")}
-              placeholder="Price"
-              className="w-full border outline-none focus:outline-none p-2 rounded-md  no-arrows"
-            />
-            {errors.price && (
-              <span className="text-red-500 font-bold text-sm">
-                {errors.price.message}
+          {errors.images && <span>{errors.images.message}</span>}
+          <p className="w-full text-sm text-slate-500">Photo Product</p>
+          <div className="w-full border-dashed bg-slate-100 border-2 border-slate-300">
+            <div className="flex flex-wrap justify-start w-full">
+              {images &&
+                images.map((image, index) => (
+                  <img
+                    key={index}
+                    src={image}
+                    className="rounded-lg w-[120px] h-[120px] object-cover m-2"
+                    alt="Product"
+                  />
+                ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => document.getElementById("images").click()}
+              className="flex flex-row justify-center align-center text-sm mx-auto bg-slate-200 text-primary border border-primary p-2 rounded-lg my-4 focus:scale-95 hover:opacity-90"
+            >
+              <Upload size={16} />
+              <span className="ml-2 font-medium capitalize">
+                {getButtonText()}
               </span>
-            )}
-          </div>
-          <div className="w-1/2">
-            <label htmlFor="discount" className="block capitalize">
-              Discount
-            </label>
-            <input
-              id="discount"
-              type="number"
-              {...register("discountPrice")}
-              placeholder="Discount Price"
-              className="w-full border outline-none focus:outline-none p-2 rounded-md  no-arrows"
-            />
+            </button>
           </div>
         </div>
 
-        <div className="flex flex-row w items-center justify-between gap-3 bg-white px-4 py-1">
-          <div className="w-1/2">
-            <label htmlFor="SKU" className="block capitalize">
-              SKU (Stock Keeping Unit)
-            </label>
-            <input
-              id="SKU"
-              type="text"
-              {...register("SKU")}
-              placeholder="SKU"
-              className="w-full border outline-none focus:outline-none p-2 rounded-md  "
-            />
-            {errors.SKU && (
-              <span className="text-red-500 font-bold text-sm">
-                {errors.SKU.message}
-              </span>
-            )}
-          </div>
-          <div className="w-1/2">
-            <label htmlFor="brand" className="block">
-              Brand
-            </label>
-            <input
-              id="brand"
-              type="text"
-              {...register("brand")}
-              placeholder="Brand"
-              className="w-full border outline-none focus:outline-none p-2 rounded-md "
-            />
-            {errors.brand && (
-              <span className="text-red-500 font-bold text-sm">
-                {errors.brand.message}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="items-left bg-white flex flex-col px-4 py-1">
-          <label htmlFor="description" className="block capitalize">
-            Description
-          </label>
-          <textarea
-            id="description"
-            type="text"
-            rows={3}
-            {...register("description")}
-            placeholder="Description"
-            className="w-full border outline-none focus:outline-none p-2 rounded-md  "
-          ></textarea>
-          {errors.description && (
-            <span className="text-red-500 font-bold text-sm">
-              {errors.description.message}
-            </span>
-          )}
-        </div>
-
-        <div className="flex flex-row items-center justify-between gap-3 px-4 py-1">
-          <div className="w-1/2">
-            <label htmlFor="size" className="block capitalize">
-              Size
-            </label>
-            <input
-              id="size"
-              type="number"
-              {...register("size")}
-              placeholder="Size"
-              className="w-full border outline-none focus:outline-none p-2 rounded-md  no-arrows"
-            />
-            {errors.size && (
-              <span className="text-red-500 font-bold text-sm">
-                {errors.size.message}
-              </span>
-            )}
-          </div>
-          <div className="w-1/2">
-            <label htmlFor="measurementUnit" className="block">
-              Measurement Unit
-            </label>
-            <input
-              id="measurementUnit"
-              type="text"
-              {...register("measurementUnit")}
-              placeholder="Measurement Unit"
-              className="w-full border outline-none focus:outline-none p-2 rounded-md  no-arrows"
-            />
-            {errors.measurementUnit && (
-              <span className="text-red-500 font-bold text-sm">
-                {errors.measurementUnit.message}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="px-4 py-1">
-          <div className="text-left capitalize block text-[16px] ">
+        {/* Category Section */}
+        <div className="bg-white m-1 p-3 rounded-lg w-full h-fit border-[0.5px] shadow-md border-slate-200 mt-4">
+          <h1 className="font-semibold text-md w-full border-slate-100">
             Category
-          </div>
-          <div className="flex flex-row gap-3 items-left bg-white  justify-between ">
-            <div className="w-1/3">
-              <input
-                type="text"
-                {...register("category.level_1_name")}
-                placeholder="Level 1"
-                className="w-full rounded-md border p-2"
-              />
-              {errors.category && errors.category.level_1_name && (
-                <span className="text-red-500 font-bold text-sm">
-                  {errors.category.level_1_name.message}
-                </span>
-              )}
-            </div>
-            <div className="w-1/3">
-              <input
-                type="text"
-                {...register("category.level_2_name")}
-                placeholder="Level 2"
-                className="w-full rounded-md border p-2"
-              />
-              {errors.category && errors.category.level_2_name && (
-                <span className="text-red-500 font-bold text-sm">
-                  {errors.category.level_2_name.message}
-                </span>
-              )}
-            </div>
-            <div>
-              <input
-                type="text"
-                {...register("category.level_3_name")}
-                placeholder="Level 3"
-                className="w-full rounded-md border p-2"
-              />
-              {errors.category && errors.category.level_3_name && (
-                <span className="text-red-500 font-bold text-sm">
-                  {errors.category.level_3_name.message}
-                </span>
-              )}
-            </div>
+          </h1>
+          <div className="mt-2">
+            <label htmlFor="category" className="block text-sm text-gray-500">
+              Category
+            </label>
+            <select
+              id="category"
+              {...register("category", { required: "Category is required" })}
+              className="w-full rounded-md border px-2 py-1 text-sm outline-none focus:outline-none bg-slate-100"
+            >
+              <option value="">Select Category</option>
+              {categories &&
+                categories
+                  .sort((a, b) => a.name.localeCompare(b.name)) // Sort categories alphabetically
+                  .map((category) => (
+                    <option key={category._id} value={category._id}>
+                      {category.name}
+                    </option>
+                  ))}
+            </select>
+            {errors.category && (
+              <span className="text-red-500 font-bold text-sm">
+                {errors.category.message}
+              </span>
+            )}
           </div>
         </div>
 
-        <button
-          type="submit"
-          className="bg-primary text-white p-3 rounded-lg m-4  block focus:scale-95 hover:opacity-95"
-        >
-          {isLoading ? <Loader /> : action}
-        </button>
+        {/* Inventory Section */}
+        <div className="bg-white m-1 p-3 rounded-lg w-full h-fit border-[0.5px] shadow-md border-slate-200 mt-4">
+          <h1 className="font-semibold text-md w-full border-slate-100">
+            Inventory
+          </h1>
+          <div className="mt-2 flex gap-4">
+            <div className="w-full flex-1">
+              <label
+                htmlFor="SKU"
+                className="block capitalize text-sm text-slate-500"
+              >
+                SKU (Stock Keeping Unit)
+              </label>
+              <input
+                id="SKU"
+                type="text"
+                {...register("SKU")}
+                placeholder="SKU"
+                className="w-full border text-sm outline-none focus:outline-none py-1 px-2 rounded-md bg-slate-100"
+              />
+              {errors.SKU && (
+                <span className="text-red-500 font-bold text-sm">
+                  {errors.SKU.message}
+                </span>
+              )}
+            </div>
+            {action === "Update" && (
+              <div className="w-full flex-1">
+                <label
+                  htmlFor="stockLevel"
+                  className="block capitalize text-sm text-gray-500"
+                >
+                  Stock Level
+                </label>
+                <input
+                  id="stockLevel"
+                  type="number"
+                  {...register("stockLevel")}
+                  placeholder="Stock Level"
+                  className="w-full border text-sm outline-none focus:outline-none py-1 px-2 rounded-md bg-slate-100"
+                />
+                {errors.stockLevel && (
+                  <span className="text-red-500 font-bold text-sm">
+                    {errors.stockLevel.message}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="w-full flex justify-center">
+          <button
+            type="submit"
+            className="bg-primary text-white p-3 rounded-lg my-2 block focus:scale-95 hover:opacity-95 shadow-md"
+          >
+            {isLoading ? <Loader /> : action}
+          </button>
+        </div>
       </div>
     </form>
   );

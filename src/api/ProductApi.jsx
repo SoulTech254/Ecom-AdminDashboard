@@ -76,15 +76,18 @@ export const useGetAllProducts = (searchState) => {
 };
 
 export const useUpdateProduct = () => {
-  const updateProductRequest = async ({ id, data }) => {
-    console.log(data);
-    const response = await fetch(`${BASE_URL}/products/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
+  const updateProductRequest = async ({ id, formData, branchName }) => {
+    console.log("Updating product with branchName:", branchName); // Debugging line
+    const response = await fetch(
+      `${BASE_URL}/products/${id}?branchName=${branchName}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      }
+    );
     const result = await response.json();
     if (!response.ok) {
       throw new Error(result.message);
@@ -93,7 +96,8 @@ export const useUpdateProduct = () => {
   };
 
   const { mutateAsync: updateProduct, isLoading: isUpdatingProduct } =
-    useMutation(updateProductRequest, {
+    useMutation({
+      mutationFn: updateProductRequest,
       onSuccess: () => {
         toast.success("Product updated");
       },
@@ -101,13 +105,16 @@ export const useUpdateProduct = () => {
         toast.error(error.message);
       },
     });
+
   return { updateProduct, isUpdatingProduct };
 };
 
-export const useGetProduct = () => {
-  const getProductsRequest = async (id) => {
-    // This is line 115
-    const response = await fetch(`${BASE_URL}/products/${id}`);
+export const useGetProduct = (id, branchName) => {
+  // Function to fetch product data from the API
+  const getProductsRequest = async () => {
+    const response = await fetch(
+      `${BASE_URL}/products/${id}?branchName=${branchName}`
+    );
     const data = await response.json();
     if (!response.ok) {
       throw new Error(data.message);
@@ -115,12 +122,13 @@ export const useGetProduct = () => {
     return data;
   };
 
-  const { id } = useParams();
+  // Fetch product data using react-query with the provided id and branchName
+  const {
+    data: product,
+    isLoading: isGettingProduct,
+    error,
+    refetch, // Expose the refetch function
+  } = useQuery(["getProduct", id, branchName], getProductsRequest); // Provide query function here
 
-  const { data: product, isLoading: isGettingProduct } = useQuery(
-    ["getProduct", id],
-    () => getProductsRequest(id)
-  );
-
-  return { product, isGettingProduct };
+  return { product, isGettingProduct, error, refetch };
 };

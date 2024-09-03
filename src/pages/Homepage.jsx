@@ -1,23 +1,20 @@
-import React, { useState } from 'react';
-import AddProductForm from '@/forms/AddProductForm';
-import { useCreateProduct } from '@/api/ProductApi';
+import React, { useState } from "react";
+import AddProductForm from "@/forms/AddProductForm";
+import { useCreateProduct } from "@/api/ProductApi";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 
 const AddProductPage = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const {createProduct, isCreatingProduct} = useCreateProduct();
+  const { createProduct, isCreatingProduct } = useCreateProduct();
   const [defaultValues, setDefaultValues] = useState({
-    productName: '',
+    productName: "",
     price: 0,
-    SKU: '',
-    description: '',
-    measurementUnit: '',
+    SKU: "",
+    description: "",
+    measurementUnit: "",
     size: 0,
-    brand: '',
-    category: {
-      level_1_name: '',
-      level_2_name: '',
-      level_3_name: ''
-    }
+    brand: "",
+    category: "",
   });
   const [img, setImg] = useState([]);
 
@@ -30,11 +27,11 @@ const AddProductPage = () => {
       createProduct(formData);
 
       // Handle success response
-      alert('Product added successfully');
+      alert("Product added successfully");
     } catch (error) {
       // Handle error response
       console.error(error);
-      alert('Failed to add product');
+      alert("Failed to add product");
     } finally {
       setIsLoading(false);
     }
@@ -42,7 +39,30 @@ const AddProductPage = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-4">Add Product</h1>
+      <div className="p-2 m-2 border  rounded-md">
+        <h1 className="text-lg font-medium ">Add Product</h1>
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/">
+                <p className="text-sm font-medium text-primary">Dashboard</p>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/">
+                <p className="text-sm font-medium text-primary">Product List</p>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>
+                <p className="text-sm">Products</p>
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
       <AddProductForm
         onSubmit={handleFormSubmit}
         action="Add Product"

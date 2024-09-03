@@ -4,7 +4,7 @@ import AddProductForm from "@/forms/AddProductForm";
 const AddProductPage = () => {
   const { createProduct, isCreatingProduct } = useCreateProduct();
   return (
-    <div>
+    <div >
       <AddProductForm
         onSubmit={createProduct}
         isLoading={isCreatingProduct}
