@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useGetAllUsers } from "@/api/UserApi";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,51 +8,38 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import DataTable from "@/components/DataTable";
-import PaginationSelector from "@/components/PaginationSelector";
 import SearchBar from "@/components/SearchBar";
 import SortOptionDropdown from "@/components/SortOptionDropdown";
-import { userTableConfig } from "@/config/tablesConfig";
-import { CirclePlus, File, UserRound } from "lucide-react";
+import { logisticsTableConfig } from "@/config/tablesConfig"; // Define this configuration
+import { CirclePlus, File, Truck } from "lucide-react"; // Adjust icons as needed
+import { useGetLogistics } from "@/api/LogisticsApi";
 import { Link } from "react-router-dom";
 
-const UsersPage = () => {
-  const [results, setResults] = useState({
-    metadata: {
-      page: 1,
-      totalPages: 1,
-    },
-    results: [],
-  });
-
+const LogisticsPage = () => {
+  const [logistics, setLogistics] = useState([]);
   const [searchState, setSearchState] = useState({
     searchQuery: "",
-    page: 1,
     sortOption: "bestMatch",
   });
 
-  const { users, isLoading, is404Error } = useGetAllUsers(searchState);
-  console.log(users);
+  const { logistics: data, isLoading, isError } = useGetLogistics(searchState);
 
   useEffect(() => {
     if (!isLoading) {
-      if (is404Error) {
-        // Handle 404 error case
-        setResults({
-          metadata: { page: 1, totalPages: 1 },
-          results: [],
-        });
-      } else if (users) {
-        // Update state with the fetched users
-        setResults(users);
+      if (isError) {
+        // Handle error case
+        setLogistics([]);
+      } else if (data) {
+        // Update state with the fetched logistics
+        setLogistics(data);
       }
     }
-  }, [isLoading, users, is404Error]);
+  }, [isLoading, data, isError]);
 
   const handleSearchQueryChange = (searchFormData) => {
     setSearchState((prev) => ({
       ...prev,
       searchQuery: searchFormData.searchQuery,
-      page: 1,
     }));
   };
 
@@ -61,14 +47,6 @@ const UsersPage = () => {
     setSearchState((prevState) => ({
       ...prevState,
       sortOption,
-      page: 1,
-    }));
-  };
-
-  const handlePageChange = (page) => {
-    setSearchState((prevState) => ({
-      ...prevState,
-      page,
     }));
   };
 
@@ -85,7 +63,7 @@ const UsersPage = () => {
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbPage>
-                <p className="text-lg">Users</p>
+                <p className="text-lg">Logistics</p>
               </BreadcrumbPage>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
@@ -94,7 +72,7 @@ const UsersPage = () => {
 
         <div className="flex items-center gap-2">
           <SearchBar
-            placeholder={"Search Users"}
+            placeholder={"Search Logistics"}
             searchQuery={searchState.searchQuery}
             onSubmit={handleSearchQueryChange}
           />
@@ -111,29 +89,29 @@ const UsersPage = () => {
             sortOption={searchState.sortOption}
           />
         </div>
+
+        <Link to="/logistics/new">
+          <div className="w-fit flex items-center border rounded-sm px-3 py-1 gap-2 cursor-pointer">
+            <CirclePlus size={25} />
+            Add New Vehicle
+          </div>
+        </Link>
       </div>
 
       {isLoading ? (
         <p>Loading...</p>
-      ) : is404Error ? (
-        <p>No users found</p>
+      ) : isError ? (
+        <p>No logistics found</p>
       ) : (
         <>
-          {results.results.length > 0 ? (
-            <>
-              <DataTable
-                config={userTableConfig}
-                data={results.results}
-                page="users"
-              />
-              <PaginationSelector
-                page={results.metadata.page}
-                pages={results.metadata.totalPages}
-                onPageChange={handlePageChange}
-              />
-            </>
+          {logistics.length > 0 ? (
+            <DataTable
+              config={logisticsTableConfig} // Ensure this config matches the new data structure
+              data={logistics}
+              page="logistics"
+            />
           ) : (
-            <p>No users found</p>
+            <p>No logistics found</p>
           )}
         </>
       )}
@@ -141,4 +119,4 @@ const UsersPage = () => {
   );
 };
 
-export default UsersPage;
+export default LogisticsPage;

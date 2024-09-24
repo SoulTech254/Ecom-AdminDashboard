@@ -92,9 +92,6 @@ const ProductsPage = () => {
             searchQuery={searchState.searchQuery}
             onSubmit={setSearchQuery}
           />
-          <div className="flex justify-center h-fit items-center w-fit rounded-full border p-2">
-            <UserRound size={25} />
-          </div>
         </div>
       </div>
       <div className="flex justify-between mx-1 mb-4">
@@ -110,8 +107,8 @@ const ProductsPage = () => {
         </div>
         +{" "}
         <Link to="/products/new-product">
-          <div className="cursor-pointer flex rounded-sm w-fit border px-4 py-2 items-center gap-2">
-            <CirclePlus /> <span>Add a new Product</span>+ -{" "}
+          <div className="cursor-pointer flex rounded-sm w-fit border px-4 py-2 items-center gap-2 bg-primary shadow-sm hover:scale-95 text-white">
+            <CirclePlus color="#FFFFFF"/> <span>Add a new Product</span>
           </div>
         </Link>
       </div>

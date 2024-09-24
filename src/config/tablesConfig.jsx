@@ -1,4 +1,5 @@
 import React from "react";
+import { Truck, Bike, Car } from "lucide-react"; // Ensure you import relevant icons
 import { Link } from "react-router-dom";
 export const productTableConfig = {
   columns: {
@@ -9,7 +10,7 @@ export const productTableConfig = {
           ? React.createElement("img", {
               src: value[0],
               alt: "Product Image",
-              style: { width: "50px", height: "50px", borderRadius: "20px" },
+              style: { width: "40px", height: "40px", borderRadius: "10px" },
             })
           : null;
       },
@@ -89,4 +90,86 @@ export const orderTableConfig = {
     "branch",
     "user",
   ],
+};
+
+// src/config/tablesConfig.js
+
+export const logisticsTableConfig = {
+  columns: {
+    driver_name: {
+      label: "Driver Name",
+      render: (value) => <span>{value}</span>, // Render driver name directly
+    },
+    vehicle_type: {
+      label: "Vehicle Type",
+      render: (value) => {
+        const icons = {
+          Truck: <Truck />,
+          Bike: <Bike />,
+          Van: <Car />,
+        };
+        return (
+          <div className="flex items-center">
+            {icons[value] || <span>{value}</span>}
+            <span className="ml-2">{value}</span>
+          </div>
+        );
+      },
+    },
+    driver_photo: {
+      label: "Driver Photo",
+      render: (value) => (
+        <img src={value} alt="Driver" className="w-12 h-12 rounded-full" />
+      ),
+    },
+    vehicle_registration_number: {
+      label: "Vehicle Registration",
+      render: (value) => <span>{value}</span>, // Render vehicle registration directly
+    },
+  },
+  order: [
+    "driver_photo",
+    "driver_name",
+    "vehicle_type",
+    "vehicle_registration_number",
+  ], // Specify the order of columns, including the new one
+};
+
+export const categoriesTableConfig = {
+  columns: {
+    imageUrl: {
+      label: "Image",
+      render: (value) => {
+        return value
+          ? React.createElement("img", {
+              src: value,
+              alt: "Category Image",
+              style: { width: "50px", height: "50px", borderRadius: "20px" },
+            })
+          : null;
+      },
+    },
+    name: {
+      label: "Category Name",
+    },
+    description: {
+      label: "Description",
+    },
+    parent: {
+      label: "Parent Category",
+      render: (value, row) => {
+        // Assuming `parent` is populated with the parent category's name
+        return value ? value.name : "None";
+      },
+    },
+    createdAt: {
+      label: "Created At",
+      render: (value) => new Date(value).toLocaleDateString(),
+    },
+    updatedAt: {
+      label: "Updated At",
+      render: (value) => new Date(value).toLocaleDateString(),
+    },
+  },
+  order: ["imageUrl", "name", "description", "parent", "createdAt", "updatedAt"],
 };

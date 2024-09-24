@@ -14,6 +14,13 @@ import SearchBar from "@/components/SearchBar";
 import SortOptionDropdown from "@/components/SortOptionDropdown";
 import { CirclePlus, File } from "lucide-react";
 
+const deliverySlots = [
+  { value: "09:00", label: "9 AM" },
+  { value: "12:00", label: "12 PM" },
+  { value: "15:00", label: "3 PM" },
+  { value: "17:00", label: "5 PM" },
+];
+
 const OrdersPage = () => {
   const [ordersData, setOrdersData] = useState({
     metadata: {
@@ -28,16 +35,42 @@ const OrdersPage = () => {
   const [searchState, setSearchState] = useState({
     searchQuery: "",
     page: 1,
-    sortOption: "createdAt", // Example: Default sort option
+    sortOption: "createdAt",
+    startDate: "",
+    endDate: "",
   });
 
-  const { orders, isLoading: isLoadingOrders } = useGetOrders(searchState);
+  const [deliverySlot, setDeliverySlot] = useState("");
+  const [status, setStatus] = useState("");
+  const [method, setMethod] = useState(""); // Updated field name
+
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  const { orders, isLoading: isLoadingOrders } = useGetOrders({
+    ...searchState,
+    deliverySlot,
+    status,
+    method, // Updated field name
+    startDate,
+    endDate,
+  });
 
   useEffect(() => {
     if (!isLoadingOrders && orders) {
-      setOrdersData(orders);
+      setOrdersData({
+        ...orders,
+      });
     }
-  }, [isLoadingOrders, orders]);
+  }, [
+    isLoadingOrders,
+    orders,
+    deliverySlot,
+    status,
+    method,
+    startDate,
+    endDate,
+  ]);
 
   const setSearchQuery = (searchFormData) => {
     setSearchState((prev) => ({
@@ -62,6 +95,32 @@ const OrdersPage = () => {
     }));
   };
 
+  const handleDateChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "startDate") {
+      setStartDate(value);
+    } else if (name === "endDate") {
+      setEndDate(value);
+    }
+    setSearchState((prevState) => ({
+      ...prevState,
+      [name]: value,
+      page: 1,
+    }));
+  };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "deliverySlot") {
+      setDeliverySlot(value);
+    } else if (name === "status") {
+      setStatus(value);
+    } else if (name === "method") {
+      setMethod(value);
+    }
+  };
+
+  console.log(ordersData);
   return (
     <div>
       <div className="flex items-center w-full justify-between mb-3">
@@ -88,106 +147,181 @@ const OrdersPage = () => {
             searchQuery={searchState.searchQuery}
             onSubmit={setSearchQuery}
           />
-          <div className="flex justify-center h-fit items-center w-fit rounded-full border p-2">
-            {/* Replace with appropriate icon */}
-            <CirclePlus size={25} />
-          </div>
         </div>
-      </div>
-      <div className="flex justify-between mx-1 mb-4">
-        <div className="flex items-center gap-2">
-          <div className="w-fit flex items-center border rounded-sm px-3 py-1 gap-2 cursor-pointer">
-            <File size={25} />
-            Export
-          </div>
-          <SortOptionDropdown
-            onChange={(value) => setSortOption(value)}
-            sortOption={searchState.sortOption}
-          />
-        </div>
-        <Link to="/orders/new-order">
-          <div className="cursor-pointer flex rounded-sm w-fit border px-4 py-2 items-center gap-2">
-            {/* Replace with appropriate icon */}
-            <CirclePlus size={18} />
-            <span>Add a new Order</span>
-          </div>
-        </Link>
       </div>
 
-      {isLoadingOrders ? (
-        <p>Loading...</p>
-      ) : (
-        <>
-          {ordersData.results.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="min-w-full bg-white">
-                <thead className="bg-gray-800 text-white">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                      Order ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                      Customer Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                      Time Placed
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                      Delivery Slot
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                      Fulfillment Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                      View Details
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="text-gray-700">
-                  {ordersData.results.map((order) => (
-                    <tr key={order._id} className="hover:bg-gray-100">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {order.orderId}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {order.user.fName} {order.user.lName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {new Date(order.createdAt).toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {order.delivery.deliverySlot}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {order.delivery.method}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {order.status}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Link
-                          to={`/orders/${order._id}`}
-                          className="text-indigo-600 hover:text-indigo-900"
-                        >
-                          View Details
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      <div className="flex items-center justify-between">
+        <div className="flex justify-between items-end mb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-fit flex items-center border rounded-sm px-3 py-1 gap-2 cursor-pointer">
+              <File size={25} />
+              Export
             </div>
-          )}
-          <PaginationSelector
-            page={ordersData.metadata.page}
-            pages={ordersData.metadata.totalPages}
-            onPageChange={setPage}
-          />
-        </>
+            <SortOptionDropdown
+              onChange={(value) => setSortOption(value)}
+              sortOption={searchState.sortOption}
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 mb-2">
+          <div>
+            <label
+              htmlFor="startDate"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Start Date
+            </label>
+            <input
+              type="date"
+              id="startDate"
+              name="startDate"
+              value={startDate}
+              onChange={handleDateChange}
+              className="border p-1 rounded "
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="endDate"
+              className="block text-sm font-medium text-gray-700"
+            >
+              End Date
+            </label>
+            <input
+              type="date"
+              id="endDate"
+              name="endDate"
+              value={endDate}
+              onChange={handleDateChange}
+              className="border p-1 rounded "
+            />
+          </div>
+        </div>
+      </div>
+
+      {ordersData.results.length > 0 ? (
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white">
+            <thead className="bg-gray-800 text-white">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  <div className="flex flex-col">
+                    <span>Order ID</span>
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  <div className="flex flex-col">
+                    <span>Customer Name</span>
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  <div className="flex flex-col">
+                    <span>Time Placed</span>
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  <div className="flex flex-col">
+                    <span>Delivery Slot</span>
+                    <select
+                      name="deliverySlot"
+                      value={deliverySlot}
+                      onChange={handleFilterChange}
+                      className="border p-1 rounded mt-1 text-black"
+                    >
+                      <option value="">All</option>
+                      {deliverySlots.map((slot) => (
+                        <option
+                          key={slot.value}
+                          value={slot.value}
+                          className="text-black"
+                        >
+                          {slot.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  <div className="flex flex-col">
+                    <span>Fulfillment Type</span>
+                    <select
+                      name="method" // Updated field name
+                      value={method} // Updated field name
+                      onChange={handleFilterChange}
+                      className="border p-1 rounded mt-1 text-black"
+                    >
+                      <option value="">All</option>
+                      <option value="express">Express</option>
+                      <option value="pick-up">Store Pickup</option>
+                      <option value="normal">Normal</option>
+                    </select>
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  <div className="flex flex-col">
+                    <span>Status</span>
+                    <select
+                      name="status"
+                      value={status}
+                      onChange={handleFilterChange}
+                      className="border p-1 rounded mt-1 text-black"
+                    >
+                      <option value="">All</option>
+                      <option value="pending">Pending</option>
+                      <option value="paid">Paid</option>
+                      <option value="onRoute">On Route</option>
+                      <option value="delivered">Delivered</option>
+                      <option value="cancelled">Cancelled</option>
+                      <option value="readyForPickup">Ready For Pickup</option>
+                    </select>
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  View Details
+                </th>
+              </tr>
+            </thead>
+            <tbody className="text-gray-700">
+              {ordersData.results.map((order) => (
+                <tr key={order._id} className="hover:bg-gray-100">
+                  <td className="px-6 py-4 whitespace-nowrap uppercase">
+                    {order.orderId}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {order.user.fName} {order.user.lName}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {new Date(order.createdAt).toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {order.delivery.deliverySlot}
+                  </td>
+                  <td className="px-6 capitalize py-4 whitespace-nowrap">
+                    {order.delivery.method} {/* Updated field name */}
+                  </td>
+                  <td className="px-6 capitalize py-4 whitespace-nowrap">
+                    {order.status}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <Link to={`/orders/${order._id}`} className="text-blue-500">
+                      View Details
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="text-center p-4 text-gray-500">No orders found.</div>
       )}
+
+      <PaginationSelector
+        page={ordersData.metadata.page}
+        pages={ordersData.metadata.totalPages}
+        onPageChange={setPage}
+      />
     </div>
   );
 };

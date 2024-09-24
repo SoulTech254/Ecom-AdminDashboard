@@ -29,7 +29,7 @@ const SearchBar = ({ placeholder, onSubmit, searchQuery = "" }) => {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className={`flex items-center gap-3 justify-between flex-row border-2 p-3 rounded-md w-full ${
+      className={`flex items-center gap-3 justify-between flex-row border-2 p-2 rounded-md w-full ${
         errors.searchQuery && "border-red-500"
       }`}
     >

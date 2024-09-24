@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useGetAllUsers } from "@/api/UserApi";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,14 +8,15 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import DataTable from "@/components/DataTable";
-import PaginationSelector from "@/components/PaginationSelector";
+import PaginationSelector from "@/components/PaginationSelector"; // Import PaginationSelector
 import SearchBar from "@/components/SearchBar";
 import SortOptionDropdown from "@/components/SortOptionDropdown";
-import { userTableConfig } from "@/config/tablesConfig";
-import { CirclePlus, File, UserRound } from "lucide-react";
+import { categoriesTableConfig } from "@/config/tablesConfig";
+import { CirclePlus, Folder } from "lucide-react";
+import { useGetPaginatedCategories } from "@/api/CategoryApi";
 import { Link } from "react-router-dom";
 
-const UsersPage = () => {
+const CategoriesPage = () => {
   const [results, setResults] = useState({
     metadata: {
       page: 1,
@@ -31,29 +31,30 @@ const UsersPage = () => {
     sortOption: "bestMatch",
   });
 
-  const { users, isLoading, is404Error } = useGetAllUsers(searchState);
-  console.log(users);
+  const { categories, metadata, isLoading, isError } =
+    useGetPaginatedCategories(searchState);
 
   useEffect(() => {
     if (!isLoading) {
-      if (is404Error) {
-        // Handle 404 error case
+      if (isError) {
+        // Handle error case
         setResults({
           metadata: { page: 1, totalPages: 1 },
           results: [],
         });
-      } else if (users) {
-        // Update state with the fetched users
-        setResults(users);
+      } else if (categories) {
+        console.log(categories);
+        // Update state with the fetched categories
+        setResults(categories);
       }
     }
-  }, [isLoading, users, is404Error]);
+  }, [isLoading, categories, isError]);
 
   const handleSearchQueryChange = (searchFormData) => {
     setSearchState((prev) => ({
       ...prev,
       searchQuery: searchFormData.searchQuery,
-      page: 1,
+      page: 1, // Reset to first page on new search
     }));
   };
 
@@ -61,7 +62,7 @@ const UsersPage = () => {
     setSearchState((prevState) => ({
       ...prevState,
       sortOption,
-      page: 1,
+      page: 1, // Reset to first page on sort change
     }));
   };
 
@@ -85,7 +86,7 @@ const UsersPage = () => {
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbPage>
-                <p className="text-lg">Users</p>
+                <p className="text-lg">Categories</p>
               </BreadcrumbPage>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
@@ -94,7 +95,7 @@ const UsersPage = () => {
 
         <div className="flex items-center gap-2">
           <SearchBar
-            placeholder={"Search Users"}
+            placeholder={"Search Categories"}
             searchQuery={searchState.searchQuery}
             onSubmit={handleSearchQueryChange}
           />
@@ -103,7 +104,7 @@ const UsersPage = () => {
       <div className="flex justify-between mx-1 mb-4">
         <div className="flex items-center gap-2">
           <div className="w-fit flex items-center border rounded-sm px-3 py-1 gap-2 cursor-pointer">
-            <File size={25} />
+            <Folder size={25} />
             Export
           </div>
           <SortOptionDropdown
@@ -111,29 +112,36 @@ const UsersPage = () => {
             sortOption={searchState.sortOption}
           />
         </div>
+
+        <Link to="/categories/new">
+          <div className="w-fit flex items-center border rounded-sm px-3 py-1 gap-2 cursor-pointer">
+            <CirclePlus size={25} />
+            Add New Category
+          </div>
+        </Link>
       </div>
 
       {isLoading ? (
         <p>Loading...</p>
-      ) : is404Error ? (
-        <p>No users found</p>
+      ) : isError ? (
+        <p>No categories found</p>
       ) : (
         <>
-          {results.results.length > 0 ? (
+          {results.length > 0 ? (
             <>
               <DataTable
-                config={userTableConfig}
-                data={results.results}
-                page="users"
+                config={categoriesTableConfig} // Ensure this config matches the new data structure
+                data={results}
+                page="categories"
               />
               <PaginationSelector
-                page={results.metadata.page}
-                pages={results.metadata.totalPages}
+                page={metadata.page}
+                pages={metadata.totalPages}
                 onPageChange={handlePageChange}
               />
             </>
           ) : (
-            <p>No users found</p>
+            <p>No categories found</p>
           )}
         </>
       )}
@@ -141,4 +149,4 @@ const UsersPage = () => {
   );
 };
 
-export default UsersPage;
+export default CategoriesPage;

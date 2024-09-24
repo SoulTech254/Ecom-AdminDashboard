@@ -50,6 +50,8 @@ const AddProductForm = ({
     error: categoriesError,
   } = useGetCategories();
 
+  console.log(categories);
+
   // Update form values whenever defaultValues change
   useEffect(() => {
     reset(defaultValues);
