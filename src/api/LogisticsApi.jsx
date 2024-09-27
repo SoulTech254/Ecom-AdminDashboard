@@ -1,22 +1,17 @@
 import { useQuery, useMutation } from "react-query";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 import { toast } from "sonner";
+import useAxiosPrivate from "@/hooks/useAxiosPrivate"; // Import your custom axios hook
 
 export const useGetLogistics = (searchState) => {
+  const axiosPrivate = useAxiosPrivate(); // Use axiosPrivate for API calls
+
   // Define the fetch function
   const getLogisticsRequest = async () => {
-    // Construct the query parameter string safely
     const searchQuery = searchState?.searchQuery || "";
-    const response = await fetch(
-      `${API_BASE_URL}/logistics?searchQuery=${encodeURIComponent(searchQuery)}`
-    );
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.message || "Failed to fetch logistics");
-    }
-
-    return result;
+    const response = await axiosPrivate.get(`/api/v1/admin/logistics`, {
+      params: { searchQuery }, // Use params for query strings
+    });
+    return response.data; // Return the response data directly
   };
 
   // Use the useQuery hook from React Query
@@ -25,27 +20,21 @@ export const useGetLogistics = (searchState) => {
     isLoading,
     isError,
     error,
-  } = useQuery(["logistics", searchState], getLogisticsRequest);
-
-  console.log(logistics);
+  } = useQuery(["logistics", searchState], getLogisticsRequest, {
+    onError: () => {
+      toast.error("Error fetching logistics");
+    },
+  });
 
   return { logistics, isLoading, isError, error };
 };
 
 export const useCreateLogistics = () => {
+  const axiosPrivate = useAxiosPrivate();
+
   const createLogisticsRequest = async (data) => {
-    const response = await fetch(`${API_BASE_URL}/logistics`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.message);
-    }
-    return result;
+    const response = await axiosPrivate.post(`/api/v1/admin/logistics`, data);
+    return response.data; // Return the response data
   };
 
   const { mutateAsync: createLogistics, isLoading: isCreatingLogistics } =
@@ -54,7 +43,9 @@ export const useCreateLogistics = () => {
         toast.success("Logistics created");
       },
       onError: (error) => {
-        toast.error(error.message);
+        toast.error(
+          error.response?.data?.message || "Error creating logistics"
+        );
       },
     });
 
@@ -62,15 +53,11 @@ export const useCreateLogistics = () => {
 };
 
 export const useDeleteLogistics = () => {
+  const axiosPrivate = useAxiosPrivate();
+
   const deleteLogisticsRequest = async (id) => {
-    const response = await fetch(`${API_BASE_URL}/logistics/${id}`, {
-      method: "DELETE",
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.message);
-    }
-    return result;
+    const response = await axiosPrivate.delete(`/api/v1/admin/logistics/${id}`);
+    return response.data; // Return the response data
   };
 
   const { mutateAsync: deleteLogistics, isLoading: isDeletingLogistics } =
@@ -79,7 +66,9 @@ export const useDeleteLogistics = () => {
         toast.success("Logistics deleted");
       },
       onError: (error) => {
-        toast.error(error.message);
+        toast.error(
+          error.response?.data?.message || "Error deleting logistics"
+        );
       },
     });
 
@@ -87,19 +76,14 @@ export const useDeleteLogistics = () => {
 };
 
 export const useUpdateLogistics = () => {
+  const axiosPrivate = useAxiosPrivate();
+
   const updateLogisticsRequest = async ({ id, data }) => {
-    const response = await fetch(`${API_BASE_URL}/logistics/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.message);
-    }
-    return result;
+    const response = await axiosPrivate.put(
+      `/api/v1/admin/logistics/${id}`,
+      data
+    );
+    return response.data; // Return the response data
   };
 
   const { mutateAsync: updateLogistics, isLoading: isUpdatingLogistics } =
@@ -108,28 +92,35 @@ export const useUpdateLogistics = () => {
         toast.success("Logistics updated");
       },
       onError: (error) => {
-        toast.error(error.message);
+        toast.error(
+          error.response?.data?.message || "Error updating logistics"
+        );
       },
     });
 
   return { updateLogistics, isUpdatingLogistics };
 };
 
-const fetchLogisticById = async (id) => {
-  const response = await fetch(`${API_BASE_URL}/logistics/${id}`);
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch logistics");
-  }
-
-  return response.json();
-};
-
 export const useGetLogisticById = (id) => {
+  const axiosPrivate = useAxiosPrivate(); // Now here
+
+  const fetchLogisticById = async (id) => {
+    const response = await axiosPrivate.get(`/api/v1/admin/logistics/${id}`);
+    return response.data; // Return the response data
+  };
+
   const {
     data: logistic,
     isLoading: isLoadingLogistic,
+    isError,
+    error,
     refetch,
-  } = useQuery(["logistic", id], () => fetchLogisticById(id));
-  return { logistic, isLoadingLogistic, refetch };
+  } = useQuery(["logistic", id], () => fetchLogisticById(id), {
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "Error fetching logistics");
+    },
+    enabled: !!id, // Only run the query if `id` is defined
+  });
+
+  return { logistic, isLoadingLogistic, isError, error, refetch };
 };

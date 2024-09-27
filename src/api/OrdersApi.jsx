@@ -1,21 +1,13 @@
 import { useQuery, useMutation } from "react-query";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 import { toast } from "sonner";
+import useAxiosPrivate from "@/hooks/useAxiosPrivate"; // Import your custom axios hook
 
 export const useGetUserOrders = (orderId) => {
+  const axiosPrivate = useAxiosPrivate();
+
   const fetchUserOrders = async () => {
-    const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch orders");
-    }
-
-    return response.json();
+    const response = await axiosPrivate.get(`/api/v1/orders/${orderId}`);
+    return response.data; // Return response data directly
   };
 
   return useQuery(["userOrders", orderId], fetchUserOrders);
@@ -31,6 +23,8 @@ export const useGetOrders = ({
   startDate,
   endDate,
 }) => {
+  const axiosPrivate = useAxiosPrivate();
+
   const getOrdersRequest = async () => {
     console.log("getOrdersRequest started");
 
@@ -40,26 +34,15 @@ export const useGetOrders = ({
       sortOption,
       deliverySlot,
       status,
-      method, // Updated field name
+      method,
       startDate,
       endDate,
     });
 
-    const requestUrl = `${API_BASE_URL}/orders?${queryParams}`;
+    const requestUrl = `/api/v1/orders?${queryParams.toString()}`; // Updated URL
 
-    const response = await fetch(requestUrl, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      console.error("Failed to fetch orders");
-      throw new Error("Failed to fetch orders");
-    }
-
-    const orders = await response.json();
+    const response = await axiosPrivate.get(requestUrl);
+    const orders = response.data; // Return the response data directly
     console.log("Orders fetched:", orders);
     return orders;
   };
@@ -80,7 +63,7 @@ export const useGetOrders = ({
       method,
       startDate,
       endDate,
-    ], // Updated field name
+    ],
     getOrdersRequest
   );
 
@@ -89,26 +72,16 @@ export const useGetOrders = ({
 };
 
 export const useUpdateOrderStatus = () => {
+  const axiosPrivate = useAxiosPrivate();
+
   const updateOrderStatusRequest = async ({ orderId, newStatus }) => {
-    console.log("Updating order status for orderId:", orderId); // Debugging line
-    const response = await fetch(
-      `${API_BASE_URL}/orders/update-status/${orderId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ newStatus }),
-      }
+    console.log("Updating order status for orderId:", orderId);
+    const response = await axiosPrivate.put(
+      `/api/v1/orders/update-status/${orderId}`,
+      { newStatus }
     );
 
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.message);
-    }
-
-    return result;
+    return response.data; // Return response data directly
   };
 
   const { mutateAsync: updateOrderStatus, isLoading: isUpdatingOrderStatus } =
@@ -118,7 +91,11 @@ export const useUpdateOrderStatus = () => {
         toast.success("Order status updated successfully");
       },
       onError: (error) => {
-        toast.error(`Failed to update status: ${error.message}`);
+        toast.error(
+          `Failed to update status: ${
+            error.response?.data?.message || error.message
+          }`
+        );
       },
     });
 
@@ -126,26 +103,16 @@ export const useUpdateOrderStatus = () => {
 };
 
 export const useUpdateLogistics = () => {
+  const axiosPrivate = useAxiosPrivate();
+
   const updateLogisticsRequest = async ({ orderId, newLogisticId }) => {
-    console.log("Updating logistics for orderId:", orderId); // Debugging line
-    const response = await fetch(
-      `${API_BASE_URL}/orders/update-logistics/${orderId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ newLogisticId }),
-      }
+    console.log("Updating logistics for orderId:", orderId);
+    const response = await axiosPrivate.put(
+      `/api/v1/orders/update-logistics/${orderId}`,
+      { newLogisticId }
     );
 
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.message);
-    }
-
-    return result;
+    return response.data; // Return response data directly
   };
 
   const { mutateAsync: updateLogistics, isLoading: isUpdatingLogistics } =
@@ -155,7 +122,11 @@ export const useUpdateLogistics = () => {
         toast.success("Logistics updated successfully");
       },
       onError: (error) => {
-        toast.error(`Failed to update logistics: ${error.message}`);
+        toast.error(
+          `Failed to update logistics: ${
+            error.response?.data?.message || error.message
+          }`
+        );
       },
     });
 

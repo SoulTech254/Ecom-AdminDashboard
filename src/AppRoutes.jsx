@@ -14,122 +14,137 @@ import CategoriesPage from "./pages/CategoriesPage";
 import AddCategoryPage from "./pages/AddCategoryPage";
 import UpdateCategoryPage from "./pages/UpdateCategoryPage";
 import Layout from "./layout/layout";
+import AdminRegistrationPage from "./pages/RegistrationPage";
+import AdminLoginPage from "./pages/LoginPage";
+import PrivateRoute from "./layout/PrivateRoute";
 
 function AppRoutes() {
   return (
     <Routes>
-      <Route
-        path="/"
-        element={
-          <Layout>
-            <Homepage />
-          </Layout>
-        }
-      />
-      <Route
-        path="/products"
-        element={
-          <Layout>
-            <ProductsPage />
-          </Layout>
-        }
-      />
-      <Route
-        path="/products/new-product"
-        element={
-          <Layout>
-            <AddProductPage />
-          </Layout>
-        }
-      />
-      <Route
-        path="/products/:id"
-        element={
-          <Layout>
-            <UpdateProductPage />
-          </Layout>
-        }
-      />
-      <Route
-        path="/users"
-        element={
-          <Layout>
-            <UsersPage />
-          </Layout>
-        }
-      />
-      <Route
-        path="/users/:id"
-        element={
-          <Layout>
-            <UserInfoPage />
-          </Layout>
-        }
-      />
-      <Route
-        path="/orders"
-        element={
-          <Layout>
-            <OrdersPage />
-          </Layout>
-        }
-      />
-      <Route
-        path="/logistics"
-        element={
-          <Layout>
-            <LogisticsPage />
-          </Layout>
-        }
-      />
-      <Route
-        path="/categories"
-        element={
-          <Layout>
-            <CategoriesPage />
-          </Layout>
-        }
-      />
-      <Route
-        path="/categories/new"
-        element={
-          <Layout>
-            <AddCategoryPage />
-          </Layout>
-        }
-      />
-      <Route
-        path="/categories/:id"
-        element={
-          <Layout>
-            <UpdateCategoryPage />
-          </Layout>
-        }
-      />
-      <Route
-        path="/orders/:orderId"
-        element={
-          <Layout>
-            <OrderInfoPage />
-          </Layout>
-        }
-      />
-      <Route
-        path="/logistics/new"
-        element={
-          <Layout>
-            <AddLogisticsPage />
-          </Layout>
-        }
-      />
-      <Route
-        path="/logistics/:id"
-        element={
-          <Layout>
-            <UpdateLogisticPage />
-          </Layout>
-        }
-      />
+      <Route path="/sign-in" element={<AdminLoginPage />} />
+
+      <Route element={<PrivateRoute />}>
+        <Route
+          path="/"
+          element={
+            <Layout>
+              <Homepage />
+            </Layout>
+          }
+        />
+        <Route
+          path="/products"
+          element={
+            <Layout>
+              <ProductsPage />
+            </Layout>
+          }
+        />
+        <Route
+          path="/products/new-product"
+          element={
+            <Layout>
+              <AddProductPage />
+            </Layout>
+          }
+        />
+        <Route
+          path="/products/:id"
+          element={
+            <Layout>
+              <UpdateProductPage />
+            </Layout>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <Layout>
+              <UsersPage />
+            </Layout>
+          }
+        />
+        <Route
+          path="/users/:id"
+          element={
+            <Layout>
+              <UserInfoPage />
+            </Layout>
+          }
+        />
+        <Route
+          path="/orders"
+          element={
+            <Layout>
+              <OrdersPage />
+            </Layout>
+          }
+        />
+        <Route
+          path="/logistics"
+          element={
+            <Layout>
+              <LogisticsPage />
+            </Layout>
+          }
+        />
+        <Route
+          path="/categories"
+          element={
+            <Layout>
+              <CategoriesPage />
+            </Layout>
+          }
+        />
+        <Route
+          path="/categories/new"
+          element={
+            <Layout>
+              <AddCategoryPage />
+            </Layout>
+          }
+        />
+        <Route
+          path="/categories/:id"
+          element={
+            <Layout>
+              <UpdateCategoryPage />
+            </Layout>
+          }
+        />
+        <Route
+          path="/orders/:orderId"
+          element={
+            <Layout>
+              <OrderInfoPage />
+            </Layout>
+          }
+        />
+        <Route
+          path="/logistics/new"
+          element={
+            <Layout>
+              <AddLogisticsPage />
+            </Layout>
+          }
+        />
+        <Route
+          path="/logistics/:id"
+          element={
+            <Layout>
+              <UpdateLogisticPage />
+            </Layout>
+          }
+        />
+        <Route
+          path="/sign-up"
+          element={
+            <Layout>
+              <AdminRegistrationPage />
+            </Layout>
+          }
+        />
+      </Route>
     </Routes>
   );
 }

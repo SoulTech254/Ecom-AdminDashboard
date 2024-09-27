@@ -1,23 +1,13 @@
 import { toast } from "sonner";
 import { useMutation, useQuery } from "react-query";
-import { useParams } from "react-router-dom";
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import useAxiosPrivate from "@/hooks/useAxiosPrivate"; // Import your custom axios hook
 
 export const useCreateProduct = () => {
+  const axiosPrivate = useAxiosPrivate();
+
   const createProductRequest = async (data) => {
-    const response = await fetch(`${BASE_URL}/products`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.message);
-    }
-    return result;
+    const response = await axiosPrivate.post("/products", data);
+    return response.data; // Return response data directly
   };
 
   const { mutateAsync: createProduct, isLoading: isCreatingProduct } =
@@ -26,7 +16,7 @@ export const useCreateProduct = () => {
         toast.success("Product created");
       },
       onError: (error) => {
-        toast.error(error.message);
+        toast.error(error.response?.data?.message || error.message);
       },
     });
 
@@ -34,37 +24,33 @@ export const useCreateProduct = () => {
 };
 
 export const useSearchProducts = () => {
+  const axiosPrivate = useAxiosPrivate();
+
   const searchProductsRequest = async (searchQuery) => {
-    const response = await fetch(
-      `${BASE_URL}/products?searchQuery=${searchQuery}`
-    );
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message);
-    }
-    return data;
+    const response = await axiosPrivate.get(`/products`, {
+      params: { searchQuery }, // Use params for query string
+    });
+    return response.data; // Return data directly
   };
 
   const { mutateAsync: searchProducts, isLoading: isLoadingSearchProducts } =
     useMutation(searchProductsRequest);
+  
   return { searchProducts, isLoadingSearchProducts };
 };
 
 export const useGetAllProducts = (searchState) => {
-  console.log(searchState);
-  const params = new URLSearchParams();
-  params.set("searchQuery", searchState.searchQuery);
-  params.set("page", searchState.page.toString());
-  params.set("sortOption", searchState.sortOption);
+  const axiosPrivate = useAxiosPrivate();
+
   const getProductsRequest = async () => {
-    const response = await fetch(`${BASE_URL}/products?${params.toString()}`, {
-      method: "GET",
+    const response = await axiosPrivate.get("api/v1/admin/products", {
+      params: {
+        searchQuery: searchState.searchQuery,
+        page: searchState.page,
+        sortOption: searchState.sortOption,
+      },
     });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message);
-    }
-    return data;
+    return response.data; // Return data directly
   };
 
   const { data: products, isLoading: isLoadingProducts } = useQuery(
@@ -76,33 +62,27 @@ export const useGetAllProducts = (searchState) => {
 };
 
 export const useUpdateProduct = () => {
+  const axiosPrivate = useAxiosPrivate();
+
   const updateProductRequest = async ({ id, formData, branchName }) => {
-    console.log("Updating product with branchName:", branchName); // Debugging line
-    const response = await fetch(
-      `${BASE_URL}/products/${id}?branchName=${branchName}`,
+    console.log("Updating product with branchName:", branchName);
+    const response = await axiosPrivate.put(
+      `api/v1/admin/products/${id}`,
+      formData,
       {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
+        params: { branchName }, // Pass branchName as query param
       }
     );
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.message);
-    }
-    return result;
+    return response.data; // Return data directly
   };
 
   const { mutateAsync: updateProduct, isLoading: isUpdatingProduct } =
-    useMutation({
-      mutationFn: updateProductRequest,
+    useMutation(updateProductRequest, {
       onSuccess: () => {
         toast.success("Product updated");
       },
       onError: (error) => {
-        toast.error(error.message);
+        toast.error(error.response?.data?.message || error.message);
       },
     });
 
@@ -110,25 +90,21 @@ export const useUpdateProduct = () => {
 };
 
 export const useGetProduct = (id, branchName) => {
-  // Function to fetch product data from the API
+  const axiosPrivate = useAxiosPrivate();
+
   const getProductsRequest = async () => {
-    const response = await fetch(
-      `${BASE_URL}/products/${id}?branchName=${branchName}`
-    );
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message);
-    }
-    return data;
+    const response = await axiosPrivate.get(`api/v1/admin/products/${id}`, {
+      params: { branchName }, // Pass branchName as query param
+    });
+    return response.data; // Return data directly
   };
 
-  // Fetch product data using react-query with the provided id and branchName
   const {
     data: product,
     isLoading: isGettingProduct,
     error,
-    refetch, // Expose the refetch function
-  } = useQuery(["getProduct", id, branchName], getProductsRequest); // Provide query function here
+    refetch,
+  } = useQuery(["getProduct", id, branchName], getProductsRequest);
 
   return { product, isGettingProduct, error, refetch };
 };

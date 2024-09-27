@@ -1,21 +1,17 @@
 import { useQuery } from "react-query";
+import useAxiosPrivate from "@/hooks/useAxiosPrivate"; // Adjust the import path as needed
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export const useGetAllUsers = (searchState) => {
-  const params = new URLSearchParams();
-  params.set("searchQuery", searchState.searchQuery);
-  params.set("page", searchState.page.toString());
-  params.set("sortOption", searchState.sortOption);
+  const axiosPrivate = useAxiosPrivate();
 
   const getUsersRequest = async () => {
-    const response = await fetch(`${BASE_URL}/users?${params.toString()}`);
-    if (!response.ok) {
-      const errorData = await response.json();
-      const error = new Error(errorData.message || "An error occurred");
-      error.status = response.status;
-      throw error;
-    }
-    return response.json();
+    const { searchQuery, page, sortOption } = searchState;
+    const response = await axiosPrivate.get("/api/v1/admin/users", {
+      params: { searchQuery, page, sortOption },
+    });
+    return response.data; // Return response data directly
   };
 
   const {
@@ -26,19 +22,17 @@ export const useGetAllUsers = (searchState) => {
   } = useQuery(["getUsers", searchState], getUsersRequest);
 
   // Determine if a 404 error occurred
-  const is404Error = isError && error.status === 404;
+  const is404Error = isError && error.response?.status === 404;
 
   return { users, isLoading, is404Error };
 };
 
 export const useGetAUser = (id) => {
+  const axiosPrivate = useAxiosPrivate();
+
   const getAUserRequest = async () => {
-    const response = await fetch(`${BASE_URL}/users/${id}`);
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message);
-    }
-    return data;
+    const response = await axiosPrivate.get(`/api/v1/admin/users/${id}`);
+    return response.data; // Return response data directly
   };
 
   const { data: user, isLoading: isLoadingUser } = useQuery(
@@ -50,13 +44,11 @@ export const useGetAUser = (id) => {
 };
 
 export const useGetOrderHistory = (id) => {
+  const axiosPrivate = useAxiosPrivate();
+
   const getOrderHistoryRequest = async () => {
-    const response = await fetch(`${BASE_URL}/users/${id}/orders`);
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message);
-    }
-    return data;
+    const response = await axiosPrivate.get(`api/v1/admin/users/${id}/orders`);
+    return response.data; // Return response data directly
   };
 
   const { data: orderHistory, isLoading: isLoadingOrders } = useQuery(
@@ -68,13 +60,11 @@ export const useGetOrderHistory = (id) => {
 };
 
 export const useGetBillingInfo = (id) => {
+  const axiosPrivate = useAxiosPrivate();
+
   const getBillingInfoRequest = async () => {
-    const response = await fetch(`${BASE_URL}/users/${id}/billing`);
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message);
-    }
-    return data;
+    const response = await axiosPrivate.get(`/users/${id}/billing`);
+    return response.data; // Return response data directly
   };
 
   const { data: billingInfo, isLoading: isLoadingBilling } = useQuery(

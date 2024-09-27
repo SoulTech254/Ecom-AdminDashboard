@@ -1,22 +1,13 @@
 import { useMutation, useQuery } from "react-query";
 import { toast } from "sonner";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import useAxiosPrivate from "@/hooks/useAxiosPrivate"; // Import your custom axios hook
 
 export const useGetCategories = () => {
+  const axiosPrivate = useAxiosPrivate();
+
   const fetchCategoriesRequest = async () => {
-    const response = await fetch(`${API_BASE_URL}/category/`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch orders");
-    }
-
-    return response.json();
+    const response = await axiosPrivate.get(`/api/v1/admin/category/`);
+    return response.data; // Return the response data
   };
 
   const {
@@ -24,23 +15,16 @@ export const useGetCategories = () => {
     isLoading,
     isError,
   } = useQuery("categories", fetchCategoriesRequest);
+
   return { categories, isLoading, isError };
 };
 
 export const useCreateCategory = () => {
+  const axiosPrivate = useAxiosPrivate();
+
   const createCategoryRequest = async (data) => {
-    const response = await fetch(`${API_BASE_URL}/category`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.message);
-    }
-    return result;
+    const response = await axiosPrivate.post(`/api/v1/admin/category`, data);
+    return response.data; // Return the response data
   };
 
   const { mutateAsync: createCategory, isLoading: isCreatingCategory } =
@@ -49,7 +33,7 @@ export const useCreateCategory = () => {
         toast.success("Category created");
       },
       onError: (error) => {
-        toast.error(error.message);
+        toast.error(error.response?.data?.message || "Error creating category");
       },
     });
 
@@ -57,15 +41,11 @@ export const useCreateCategory = () => {
 };
 
 export const useDeleteCategory = () => {
+  const axiosPrivate = useAxiosPrivate();
+
   const deleteCategoryRequest = async (id) => {
-    const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
-      method: "DELETE",
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.message);
-    }
-    return result;
+    const response = await axiosPrivate.delete(`/api/v1/admin/category/${id}`);
+    return response.data; // Return the response data
   };
 
   const { mutateAsync: deleteCategory, isLoading: isDeletingCategory } =
@@ -74,7 +54,7 @@ export const useDeleteCategory = () => {
         toast.success("Category deleted");
       },
       onError: (error) => {
-        toast.error(error.message);
+        toast.error(error.response?.data?.message || "Error deleting category");
       },
     });
 
@@ -82,19 +62,14 @@ export const useDeleteCategory = () => {
 };
 
 export const useUpdateCategory = () => {
+  const axiosPrivate = useAxiosPrivate();
+
   const updateCategoryRequest = async ({ id, data }) => {
-    const response = await fetch(`${API_BASE_URL}/category/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.message);
-    }
-    return result;
+    const response = await axiosPrivate.put(
+      `/api/v1/admin/category/${id}`,
+      data
+    );
+    return response.data; // Return the response data
   };
 
   const { mutateAsync: updateCategory, isLoading: isUpdatingCategory } =
@@ -103,51 +78,46 @@ export const useUpdateCategory = () => {
         toast.success("Category updated");
       },
       onError: (error) => {
-        toast.error(error.message);
+        toast.error(error.response?.data?.message || "Error updating category");
       },
     });
 
   return { updateCategory, isUpdatingCategory };
 };
 
-const fetchCategoryById = async (id) => {
-  const response = await fetch(`${API_BASE_URL}/category/${id}`);
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch category");
-  }
-
-  return response.json();
-};
-
 export const useGetCategoryById = (id) => {
+  const axiosPrivate = useAxiosPrivate(); // Ensure axiosPrivate is here
+
+  const fetchCategoryById = async (id) => {
+    const response = await axiosPrivate.get(`/api/v1/admin/category/${id}`);
+    return response.data; // Return the response data
+  };
+
   const {
     data: category,
     isLoading: isLoadingCategory,
     refetch,
-  } = useQuery(["category", id], () => fetchCategoryById(id));
+  } = useQuery(["category", id], () => fetchCategoryById(id), {
+    enabled: !!id, // Only run the query if `id` is defined
+  });
+
   return { category, isLoadingCategory, refetch };
 };
 
 export const useGetPaginatedCategories = (searchState) => {
-  const params = new URLSearchParams();
-  params.set("searchQuery", searchState.searchQuery);
-  params.set("page", searchState.page.toString());
-  params.set("sortOption", searchState.sortOption);
-  params.set("limit", "10"); // Set limit to 10 items per page
+  const axiosPrivate = useAxiosPrivate();
 
   const getCategoriesRequest = async () => {
-    const response = await fetch(
-      `${API_BASE_URL}/category/paginated?${params.toString()}`
+    const params = new URLSearchParams();
+    params.set("searchQuery", searchState.searchQuery);
+    params.set("page", searchState.page.toString());
+    params.set("sortOption", searchState.sortOption);
+    params.set("limit", "10"); // Set limit to 10 items per page
+
+    const response = await axiosPrivate.get(
+      `/api/v1/admin/category/paginated?${params.toString()}`
     );
-    if (!response.ok) {
-      const errorData = await response.json();
-      const error = new Error(errorData.message || "An error occurred");
-      error.status = response.status;
-      throw error;
-    }
-    console.log(response.json);
-    return response.json();
+    return response.data; // Return the response data
   };
 
   const { data, isLoading, isError, error } = useQuery(
@@ -156,7 +126,7 @@ export const useGetPaginatedCategories = (searchState) => {
   );
 
   // Determine if a 404 error occurred
-  const is404Error = isError && error.status === 404;
+  const is404Error = isError && error.response?.status === 404;
 
   return {
     categories: data?.results || [],
