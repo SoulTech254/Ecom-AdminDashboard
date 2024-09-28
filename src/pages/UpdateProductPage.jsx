@@ -10,11 +10,12 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { useSelector } from "react-redux";
 
 const UpdateProductPage = () => {
   const { updateProduct, isUpdatingProduct } = useUpdateProduct();
   const { id } = useParams();
-  const [branch, setBranch] = useState("6685508b50bbcc94fe606924");
+  const { branch } = useSelector((state) => state.admin.admin);
   const { product, isGettingProduct, refetch } = useGetProduct(id, branch);
 
   // State to store product data
